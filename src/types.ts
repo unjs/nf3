@@ -77,6 +77,11 @@ export interface ExternalsTraceOptions {
   writePackageJson?: boolean;
 
   /**
+   * If `true`, includes all files in the package in the trace.
+   */
+  fullTraceInclude?: boolean;
+
+  /**
    * Hook functions for allow extending tracing behavior.
    */
   hooks?: TraceHooks;

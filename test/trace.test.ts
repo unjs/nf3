@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { traceNodeModules } from "../src/index.ts";
 import { fileURLToPath } from "node:url";
 import { cp } from "node:fs/promises";
+import path from "node:path";
+import { readFile } from "node:fs/promises";
 import type { TraceHooks } from "../src/types.ts";
 
 describe("traceNodeModules", () => {
@@ -34,5 +36,26 @@ describe("traceNodeModules", () => {
     expect(hooks.traceResult).toHaveBeenCalledOnce();
     expect(hooks.tracedFiles).toHaveBeenCalledOnce();
     expect(hooks.tracedPackages).toHaveBeenCalledOnce();
+  });
+
+  it.only("traceNodeModules with fullTraceInclude", async () => {
+    const input = fileURLToPath(new URL("fixture/index.mjs", import.meta.url));
+    const outDir = fileURLToPath(new URL("dist/trace", import.meta.url));
+
+    await cp(input, `${outDir}/index.mjs`);
+    await traceNodeModules([input], { outDir, fullTraceInclude: true });
+
+    expect(
+      await readFile(
+        path.join(
+          outDir,
+          "node_modules",
+          "@fixture",
+          "nitro-utils",
+          "README.md",
+        ),
+        { encoding: "utf8" },
+      ),
+    ).toMatch("# TEST");
   });
 });
