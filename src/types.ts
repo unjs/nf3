@@ -39,6 +39,11 @@ export interface ExternalsTraceOptions {
    * If `true`, writes a `package.json` file to the output directory (parent) with the traced files as dependencies.
    */
   writePackageJson?: boolean;
+
+  /**
+   * If `true`, includes all files in the package in the trace.
+   */
+  fullTraceInclude?: boolean;
 }
 
 export interface ExternalsPluginOptions extends ExternalsTraceOptions {

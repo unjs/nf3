@@ -7,6 +7,7 @@ import { parseNodeModulePath } from "mlly";
 import { dirname, join, relative, resolve } from "pathe";
 import { readPackageJSON, writePackageJSON } from "pkg-types";
 import semver from "semver";
+import { glob } from "tinyglobby";
 
 type TracedFile = {
   path: string;
@@ -116,6 +117,17 @@ export async function traceNodeModules(
         pkgJSON,
       };
       tracedPackage.versions[pkgJSON.version || "0.0.0"] = tracedPackageVersion;
+
+      if (opts.fullTraceInclude) {
+        const allFiles = await glob("**/*", {
+          cwd: tracedFile.pkgPath,
+          ignore: ["node_modules/**"],
+        });
+
+        for (const file of allFiles) {
+          tracedPackageVersion.files.push(file);
+        }
+      }
     }
     tracedPackageVersion.files.push(tracedFile.path);
     tracedFile.pkgName = pkgName;
@@ -190,9 +202,9 @@ export async function traceNodeModules(
   // Utility to find package parents
   const findPackageParents = (pkg: TracedPackage, version: string) => {
     // Try to find parent packages
-    const versionFiles: TracedFile[] = pkg.versions[version]!.files.map(
-      (path) => tracedFiles[path]!,
-    );
+    const versionFiles = pkg.versions[version]!.files.map(
+      (path) => tracedFiles[path],
+    ).filter((x): x is TracedFile => x !== undefined);
     const parentPkgs = [
       ...new Set(
         versionFiles.flatMap((file) =>
