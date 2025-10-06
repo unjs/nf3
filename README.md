@@ -1,9 +1,13 @@
 # 📦 nf3
 
-<!-- automd:badges color=yellow -->
+<!-- automd:badges color=yellow codecov packagephobia -->
 
 [![npm version](https://img.shields.io/npm/v/nf3?color=yellow)](https://npmjs.com/package/nf3)
 [![npm downloads](https://img.shields.io/npm/dm/nf3?color=yellow)](https://npm.chart.dev/nf3)
+[![install size](https://badgen.net/packagephobia/install/nf3?color=yellow)](https://packagephobia.com/result?p=nf3)
+[![codecov](https://img.shields.io/codecov/c/gh/unjs/nf3?color=yellow)](https://codecov.io/gh/unjs/nf3)
+
+<!-- /automd -->
 
 This plugin traces and copies only the `node_modules` that are actually required at runtime for your built output — powered by [@vercel/nft](https://github.com/vercel/nft).
 

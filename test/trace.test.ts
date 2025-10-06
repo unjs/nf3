@@ -6,7 +6,7 @@ import { cp } from "node:fs/promises";
 describe("traceNodeModules", () => {
   it("traceNodeModules", async () => {
     const input = fileURLToPath(new URL("fixture/index.mjs", import.meta.url));
-    const outDir = fileURLToPath(new URL("fixture/dist", import.meta.url));
+    const outDir = fileURLToPath(new URL("dist/trace", import.meta.url));
 
     await cp(input, `${outDir}/index.mjs`);
     await traceNodeModules([input], { outDir });
