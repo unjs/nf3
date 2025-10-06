@@ -47,7 +47,7 @@ export default {
 ### API
 
 ```js
-import { traceNodeModules } from "nft";
+import { traceNodeModules } from "nf3";
 
 await traceNodeModules(["./index.mjs"], {
   /* options */
