@@ -34,6 +34,11 @@ export interface ExternalsTraceOptions {
    * Preserve file permissions when copying files. If set to `true`, original file permissions are preserved. If set to a number, that value is used as the permission mode (e.g., `0o755`).
    */
   chmod?: boolean | number;
+
+  /**
+   * If `true`, writes a `package.json` file to the output directory (parent) with the traced files as dependencies.
+   */
+  writePackageJson?: boolean;
 }
 
 export interface ExternalsPluginOptions extends ExternalsTraceOptions {

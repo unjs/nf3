@@ -38,6 +38,7 @@ export default {
       // external: ["fsevents"],
       // moduleDirectories: ["node_modules"],
       // traceInclude: ["some-lib"],
+      // writePackageJson: true,
       // traceOptions: { /* see https://github.com/vercel/nft#options */ }
     }),
   ],

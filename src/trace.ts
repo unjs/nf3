@@ -275,25 +275,23 @@ export async function traceNodeModules(
   }
 
   // Write an informative package.json
-  const userPkg = await readPackageJSON(opts.rootDir || process.cwd()).catch(
-    () => ({}) as PackageJson,
-  );
-
-  await writePackageJSON(resolve(outDir, "package.json"), {
-    name: (userPkg.name || "server") + "-prod",
-    version: userPkg.version || "0.0.0",
-    type: "module",
-    private: true,
-    dependencies: Object.fromEntries(
-      [
-        ...Object.values(tracedPackages).map((pkg) => [
-          pkg.name,
-          Object.keys(pkg.versions)[0],
-        ]),
-        ...Object.entries(usedAliases),
-      ].sort(([a], [b]) => a!.localeCompare(b!)),
-    ),
-  });
+  if (opts.writePackageJson) {
+    await writePackageJSON(resolve(outDir, "../package.json"), {
+      name: "traced-node-modules",
+      version: "1.0.0",
+      type: "module",
+      private: true,
+      dependencies: Object.fromEntries(
+        [
+          ...Object.values(tracedPackages).map((pkg) => [
+            pkg.name,
+            Object.keys(pkg.versions)[0],
+          ]),
+          ...Object.entries(usedAliases),
+        ].sort(([a], [b]) => a!.localeCompare(b!)),
+      ),
+    });
+  }
 }
 
 function compareVersions(v1 = "0.0.0", v2 = "0.0.0") {
