@@ -65,6 +65,9 @@ importers:
       semver:
         specifier: ^7.7.2
         version: 7.7.2
+      tinyglobby:
+        specifier: ^0.2.15
+        version: 0.2.15
       typescript:
         specifier: ^5.9.2
         version: 5.9.3
