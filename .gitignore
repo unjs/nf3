@@ -6,4 +6,3 @@ dist
 .eslintcache
 *.log*
 *.env*
-!test/fixture/node_modules
