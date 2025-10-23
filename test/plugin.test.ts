@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, it } from "vitest";
 import { rollupNodeFileTrace } from "../src/index.ts";
 import { fileURLToPath } from "node:url";
 import { builtinModules } from "node:module";
