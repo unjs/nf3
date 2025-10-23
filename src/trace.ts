@@ -183,7 +183,9 @@ export async function traceNodeModules(
     await fsp
       .symlink(relative(dirname(dst), src), dst, isWindows ? "junction" : "dir")
       .catch((error) => {
-        console.error("Cannot link", from, "to", to, error);
+        if (error.code !== "EEXIST") {
+          console.error("Cannot link", from, "to", to, error);
+        }
       });
   };
 
