@@ -70,127 +70,143 @@ export function rollupNodeFileTrace(opts: ExternalsPluginOptions = {}): Plugin {
 
   return {
     name: "nf3",
-    async resolveId(originalId, importer, options) {
-      // Skip internals
-      if (
-        !originalId ||
-        originalId.startsWith("\u0000") ||
-        originalId.includes("?") ||
-        originalId.startsWith("#")
-      ) {
-        return null;
-      }
 
-      // Skip relative paths
-      if (originalId.startsWith(".")) {
-        return null;
-      }
-
-      // Normalize path (windows)
-      const id = normalize(originalId);
-
-      // Check for explicit inlines and externals
-      if (isExplicitInline(id, importer)) {
-        return null;
-      }
-
-      // Resolve id using rollup resolver
-      const resolved = (await this.resolve(originalId, importer, options)) || {
-        id,
-      };
-
-      // Check for explicit inlines and externals
-      if (isExplicitInline(resolved.id, importer)) {
-        return null;
-      }
-
-      // Try resolving with Node.js algorithm as fallback
-      if (
-        !isAbsolute(resolved.id) ||
-        !existsSync(resolved.id) ||
-        (await isDirectory(resolved.id))
-      ) {
-        resolved.id = tryResolve(resolved.id, importer) || resolved.id;
-      }
-
-      // Inline invalid node imports
-      if (!(await isValidNodeImport(resolved.id).catch(() => false))) {
-        return null;
-      }
-
-      // Externalize with full path if trace is disabled
-      if (opts.noTrace) {
-        return {
-          ...resolved,
-          id: isAbsolute(resolved.id) ? normalizeid(resolved.id) : resolved.id,
-          external: true,
-        };
-      }
-
-      // -- Trace externals --
-
-      // Try to extract package name from path
-      const { name: pkgName } = parseNodeModulePath(resolved.id);
-
-      // Inline if cannot detect package name
-      if (!pkgName) {
-        return null;
-      }
-
-      // Normally package name should be same as originalId
-      // Edge cases: Subpath export and full paths
-      if (pkgName !== originalId) {
-        // Subpath export
-        if (!isAbsolute(originalId)) {
-          const fullPath = tryResolve(originalId, importer);
-          if (fullPath) {
-            trackedExternals.add(fullPath);
-            return {
-              id: originalId,
-              external: true,
-            };
-          }
-        }
-
-        // Absolute path, we are not sure about subpath to generate import statement
-        // Guess as main subpath export
-        const packageEntry = tryResolve(pkgName, importer);
-        if (packageEntry !== id) {
-          // Reverse engineer subpath export
-          const guessedSubpath: string | null | undefined =
-            await lookupNodeModuleSubpath(id).catch(() => null);
-          const resolvedGuess =
-            guessedSubpath &&
-            tryResolve(join(pkgName, guessedSubpath), importer);
-          if (resolvedGuess === id) {
-            trackedExternals.add(resolvedGuess);
-            return {
-              id: join(pkgName, guessedSubpath!),
-              external: true,
-            };
-          }
-          // Inline since we cannot guess subpath
+    resolveId: {
+      order: "pre",
+      // TODO
+      // filter: { id: { exclude: [] } },
+      async handler(originalId, importer, options) {
+        // Skip internals
+        if (
+          !originalId ||
+          originalId.startsWith("\u0000") ||
+          originalId.includes("?") ||
+          originalId.startsWith("#")
+        ) {
           return null;
         }
-      }
 
-      trackedExternals.add(resolved.id);
-      return {
-        id: pkgName,
-        external: true,
-      };
-    },
-    async buildEnd() {
-      if (opts.noTrace) {
-        return;
-      }
-      for (const pkgName of opts.traceInclude || []) {
-        const path = await this.resolve(pkgName);
-        if (path?.id) {
-          trackedExternals.add(path.id.replace(/\?.+/, ""));
+        // Skip relative paths
+        if (originalId.startsWith(".")) {
+          return null;
         }
-      }
-      await traceNodeModules([...trackedExternals], opts);
+
+        // Normalize path (windows)
+        const id = normalize(originalId);
+
+        // Check for explicit inline and externals
+        if (isExplicitInline(id, importer)) {
+          return null;
+        }
+
+        // Resolve id using rollup resolver
+        const resolved = (await this.resolve(
+          originalId,
+          importer,
+          options,
+        )) || {
+          id,
+        };
+
+        // Check for explicit inlines and externals
+        if (isExplicitInline(resolved.id, importer)) {
+          return null;
+        }
+
+        // Try resolving with Node.js algorithm as fallback
+        if (
+          !isAbsolute(resolved.id) ||
+          !existsSync(resolved.id) ||
+          (await isDirectory(resolved.id))
+        ) {
+          resolved.id = tryResolve(resolved.id, importer) || resolved.id;
+        }
+
+        // Inline invalid node imports
+        if (!(await isValidNodeImport(resolved.id).catch(() => false))) {
+          return null;
+        }
+
+        // Externalize with full path if trace is disabled
+        if (opts.noTrace) {
+          return {
+            ...resolved,
+            id: isAbsolute(resolved.id)
+              ? normalizeid(resolved.id)
+              : resolved.id,
+            external: true,
+          };
+        }
+
+        // -- Trace externals --
+
+        // Try to extract package name from path
+        const { name: pkgName } = parseNodeModulePath(resolved.id);
+
+        // Inline if cannot detect package name
+        if (!pkgName) {
+          return null;
+        }
+
+        // Normally package name should be same as originalId
+        // Edge cases: Subpath export and full paths
+        if (pkgName !== originalId) {
+          // Subpath export
+          if (!isAbsolute(originalId)) {
+            const fullPath = tryResolve(originalId, importer);
+            if (fullPath) {
+              trackedExternals.add(fullPath);
+              return {
+                id: originalId,
+                external: true,
+              };
+            }
+          }
+
+          // Absolute path, we are not sure about subpath to generate import statement
+          // Guess as main subpath export
+          const packageEntry = tryResolve(pkgName, importer);
+          if (packageEntry !== id) {
+            // Reverse engineer subpath export
+            const guessedSubpath: string | null | undefined =
+              await lookupNodeModuleSubpath(id).catch(() => null);
+            const resolvedGuess =
+              guessedSubpath &&
+              tryResolve(join(pkgName, guessedSubpath), importer);
+            if (resolvedGuess === id) {
+              trackedExternals.add(resolvedGuess);
+              return {
+                id: join(pkgName, guessedSubpath!),
+                external: true,
+              };
+            }
+            // Inline since we cannot guess subpath
+            return null;
+          }
+        }
+
+        trackedExternals.add(resolved.id);
+        return {
+          id: pkgName,
+          external: true,
+        };
+      },
+    },
+
+    buildEnd: {
+      order: "post",
+      async handler() {
+        if (opts.noTrace) {
+          return;
+        }
+        for (const pkgName of opts.traceInclude || []) {
+          const path = await this.resolve(pkgName);
+          if (path?.id) {
+            trackedExternals.add(path.id.replace(/\?.+/, ""));
+          }
+        }
+        await traceNodeModules([...trackedExternals], opts);
+      },
     },
   };
 }
