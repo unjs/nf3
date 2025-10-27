@@ -69,7 +69,7 @@ export function rollupNodeFileTrace(opts: ExternalsPluginOptions = {}): Plugin {
   };
 
   return {
-    name: "node-externals",
+    name: "nf3",
     async resolveId(originalId, importer, options) {
       // Skip internals
       if (
