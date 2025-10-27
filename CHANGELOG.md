@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.1.3
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.1.2...v0.1.3)
+
+### 🩹 Fixes
+
+- Add order to `resolveId` and `buildEnd` hooks ([5831b74](https://github.com/unjs/nf3/commit/5831b74))
+
+### 💅 Refactors
+
+- Rename plugin ([ce8e792](https://github.com/unjs/nf3/commit/ce8e792))
+
+### 🏡 Chore
+
+- Update deps ([94860c3](https://github.com/unjs/nf3/commit/94860c3))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.1.2
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.1.1...v0.1.2)
