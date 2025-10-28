@@ -91,6 +91,11 @@ export function rollupNodeFileTrace(opts: ExternalsPluginOptions = {}): Plugin {
           return null;
         }
 
+        // Skip ids with protocol (excluding windows paths like C:)
+        if (/^[a-z0-9]{2,}:/i.test(originalId)) {
+          return null;
+        }
+
         // Normalize path (windows)
         const id = normalize(originalId);
 
