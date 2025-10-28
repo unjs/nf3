@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.1.4
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.1.3...v0.1.4)
+
+### 🩹 Fixes
+
+- Skip resolving ids with protocol ([4b1eed1](https://github.com/unjs/nf3/commit/4b1eed1))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.1.3
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.1.2...v0.1.3)
