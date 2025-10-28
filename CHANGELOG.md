@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.1.5
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.1.4...v0.1.5)
+
+### 📦 Build
+
+- Run build script before publish ([a6e6311](https://github.com/unjs/nf3/commit/a6e6311))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.1.4
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.1.3...v0.1.4)
