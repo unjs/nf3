@@ -19,7 +19,7 @@ export default defineBuildConfig({
           exportConditions: ["node", "import", "default"],
           transform: [
             {
-              filter: (id) => /\.m?js$/.test(id),
+              filter: (id) => /\.[mc]?js$/.test(id),
               handler: async (code, id) => {
                 try {
                   return minify(id, code, {}).code;
