@@ -28,23 +28,23 @@
     "@types/node": "^24.10.0",
     "@types/semver": "^7.7.1",
     "@vercel/nft": "^0.30.3",
-    "@vitest/coverage-v8": "^4.0.7",
+    "@vitest/coverage-v8": "^4.0.8",
     "automd": "^0.4.2",
     "changelogen": "^0.6.2",
     "eslint": "^9.39.1",
     "eslint-config-unjs": "^0.5.0",
     "exsolve": "^1.0.7",
     "mlly": "^1.8.0",
-    "obuild": "^0.3.2",
+    "obuild": "^0.4.1",
     "pathe": "^2.0.3",
     "pkg-types": "^2.3.0",
     "prettier": "^3.6.2",
-    "rolldown": "^1.0.0-beta.47",
-    "rollup": "^4.52.5",
+    "rolldown": "1.0.0-beta.47",
+    "rollup": "^4.53.1",
     "rollup-plugin-esbuild": "^6.2.1",
     "semver": "^7.7.3",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.7"
+    "vitest": "^4.0.8"
   },
   "packageManager": "pnpm@10.20.0"
 }
