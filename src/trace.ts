@@ -71,7 +71,7 @@ export async function traceNodeModules(
     ).then((r) => r.filter(Boolean))) as [string, TracedFile][],
   );
 
-  await opts?.hooks?.traceFiles?.(tracedFiles);
+  await opts?.hooks?.tracedFiles?.(tracedFiles);
 
   // Resolve traced packages
   const tracedPackages: Record<string, TracedPackage> = {};

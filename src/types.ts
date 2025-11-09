@@ -106,6 +106,6 @@ export type TracedPackage = {
 export interface TraceHooks {
   traceStart: (files: string[]) => Promise<void>;
   traceResult: (result: NodeFileTraceResult) => Promise<void>;
-  traceFiles: (files: Record<string, TracedFile>) => Promise<void>;
+  tracedFiles: (files: Record<string, TracedFile>) => Promise<void>;
   tracedPackages: (packages: Record<string, TracedPackage>) => Promise<void>;
 }

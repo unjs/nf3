@@ -14,7 +14,7 @@ describe("traceNodeModules", () => {
     const hooks: TraceHooks = {
       traceStart: vi.fn(),
       traceResult: vi.fn(),
-      traceFiles: vi.fn(),
+      tracedFiles: vi.fn(),
       tracedPackages: vi.fn(),
     };
 
@@ -32,7 +32,7 @@ describe("traceNodeModules", () => {
 
     expect(hooks.traceStart).toHaveBeenCalledOnce();
     expect(hooks.traceResult).toHaveBeenCalledOnce();
-    expect(hooks.traceFiles).toHaveBeenCalledOnce();
+    expect(hooks.tracedFiles).toHaveBeenCalledOnce();
     expect(hooks.tracedPackages).toHaveBeenCalledOnce();
   });
 });

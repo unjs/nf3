@@ -67,7 +67,7 @@ rollupNodeFileTrace({
   hooks: {
     traceStart: (files) => {},
     traceResult: (result) => {},
-    traceFiles: (files) => {},
+    tracedFiles: (files) => {},
     tracedPackages: (packages) => {},
   },
 });
