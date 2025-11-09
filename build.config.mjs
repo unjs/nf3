@@ -1,6 +1,7 @@
 import { defineBuildConfig } from "obuild/config";
 import { rollupNodeFileTrace } from "./src/plugin.ts";
 import { fileURLToPath } from "node:url";
+import { minify } from "oxc-minify";
 
 export default defineBuildConfig({
   entries: ["src/index.ts"],
@@ -16,6 +17,22 @@ export default defineBuildConfig({
         rollupNodeFileTrace({
           outDir: "dist",
           exportConditions: ["node", "import", "default"],
+          transform: [
+            {
+              filter: (id) => /\.m?js$/.test(id),
+              handler: async (code, id) => {
+                try {
+                  return minify(id, code, {}).code;
+                } catch (error) {
+                  console.error(
+                    new Error(`Minification failed for ${id}`, {
+                      cause: error,
+                    }),
+                  );
+                }
+              },
+            },
+          ],
           hooks: {
             tracedPackages(pkgs) {
               const ignorePkgs = [

@@ -45,7 +45,15 @@ export interface ExternalsTraceOptions {
    * Hook functions for allow extending tracing behavior.
    */
   hooks?: TraceHooks;
+
+  /** Transform traced files */
+  transform?: Transformer[];
 }
+
+export type Transformer = {
+  filter: (id: string) => boolean;
+  handler: (code: string, id: string) => string | Promise<string>;
+};
 
 export interface ExternalsPluginOptions extends ExternalsTraceOptions {
   /**

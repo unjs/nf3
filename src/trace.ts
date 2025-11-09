@@ -140,9 +140,21 @@ export async function traceNodeModules(
       }
       const dst = resolve(outDir, pkgPath, subpath);
       await fsp.mkdir(dirname(dst), { recursive: true });
-      await fsp.copyFile(src, dst);
-      if (opts.chmod) {
-        await fsp.chmod(dst, opts.chmod === true ? 0o644 : opts.chmod);
+
+      const transformers = (opts.transform || []).filter(
+        (t) => t?.filter?.(src) && t.handler,
+      );
+      if (transformers.length > 0) {
+        let content = await fsp.readFile(src, "utf8");
+        for (const transformer of transformers) {
+          content = (await transformer.handler(content, src)) ?? content;
+        }
+        await fsp.writeFile(dst, content, "utf8");
+      } else {
+        await fsp.copyFile(src, dst);
+        if (opts.chmod) {
+          await fsp.chmod(dst, opts.chmod === true ? 0o644 : opts.chmod);
+        }
       }
     }
 

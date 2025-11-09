@@ -73,6 +73,27 @@ rollupNodeFileTrace({
 });
 ```
 
+### Transforming
+
+Before writing files, you can transform some of them.
+
+**Example:**
+
+```js
+import { minify } from "oxc-minify";
+
+rollupNodeFileTrace({
+  transform: [
+    {
+      filter: (id) => /\.m?js$/.test(id),
+      handler: (code, id) => {
+        return minify(id, code).code;
+      },
+    },
+  ],
+});
+```
+
 ## Development
 
 <details>
