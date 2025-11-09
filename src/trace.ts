@@ -259,20 +259,20 @@ export async function traceNodeModules(
       },
     );
     for (const [version, parentPkgs] of versionEntries) {
-      // Write each version into node_modules/.nft/{name}@{version}
-      await writePackage(pkgName, version, `.nft/${pkgName}@${version}`);
+      // Write each version into node_modules/.nf3/{name}@{version}
+      await writePackage(pkgName, version, `.nf3/${pkgName}@${version}`);
       // Link one version to the top level (for indirect bundle deps)
-      await linkPackage(`.nft/${pkgName}@${version}`, `${pkgName}`);
+      await linkPackage(`.nf3/${pkgName}@${version}`, `${pkgName}`);
       // Link to parent packages
       for (const parentPkg of parentPkgs) {
         const parentPkgName = parentPkg.replace(/@[^@]+$/, "");
         await (multiVersionPkgs[parentPkgName]
           ? linkPackage(
-              `.nft/${pkgName}@${version}`,
-              `.nft/${parentPkg}/node_modules/${pkgName}`,
+              `.nf3/${pkgName}@${version}`,
+              `.nf3/${parentPkg}/node_modules/${pkgName}`,
             )
           : linkPackage(
-              `.nft/${pkgName}@${version}`,
+              `.nf3/${pkgName}@${version}`,
               `${parentPkgName}/node_modules/${pkgName}`,
             ));
       }
