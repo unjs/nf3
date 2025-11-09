@@ -16,6 +16,30 @@ export default defineBuildConfig({
         rollupNodeFileTrace({
           outDir: "dist",
           exportConditions: ["node", "import", "default"],
+          hooks: {
+            tracedPackages(pkgs) {
+              const ignorePkgs = [
+                "agent-base",
+                "chownr",
+                "debug",
+                "has-flag",
+                "https-proxy-agent",
+                "@isaacs",
+                "minizlib",
+                "ms",
+                "node-fetch",
+                "supports-color",
+                "tar",
+                "tr46",
+                "webidl-conversions",
+                "whatwg-url",
+                "yallist",
+              ];
+              for (const pkg of ignorePkgs) {
+                delete pkgs[pkg];
+              }
+            },
+          },
           inline: [
             "mlly",
             "pkg-types",
