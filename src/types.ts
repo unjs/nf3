@@ -1,4 +1,5 @@
-import type { NodeFileTraceOptions } from "@vercel/nft";
+import type { NodeFileTraceOptions, NodeFileTraceResult } from "@vercel/nft";
+import type { PackageJson } from "pkg-types";
 
 export interface ExternalsTraceOptions {
   /**
@@ -39,6 +40,11 @@ export interface ExternalsTraceOptions {
    * If `true`, writes a `package.json` file to the output directory (parent) with the traced files as dependencies.
    */
   writePackageJson?: boolean;
+
+  /**
+   * Hook functions for allow extending tracing behavior.
+   */
+  hooks?: TraceHooks;
 }
 
 export interface ExternalsPluginOptions extends ExternalsTraceOptions {
@@ -74,4 +80,32 @@ export interface ExternalsPluginOptions extends ExternalsTraceOptions {
    * Patterns to always include (trace) even if not resolved.
    */
   traceInclude?: string[];
+}
+
+export type TracedFile = {
+  path: string;
+  subpath: string;
+  parents: string[];
+  pkgPath: string;
+  pkgName: string;
+  pkgVersion: string;
+};
+
+export type TracedPackage = {
+  name: string;
+  versions: Record<
+    string,
+    {
+      pkgJSON: PackageJson;
+      path: string;
+      files: string[];
+    }
+  >;
+};
+
+export interface TraceHooks {
+  traceStart: (files: string[]) => Promise<void>;
+  traceResult: (result: NodeFileTraceResult) => Promise<void>;
+  tracedFiles: (files: Record<string, TracedFile>) => Promise<void>;
+  tracedPackages: (packages: Record<string, TracedPackage>) => Promise<void>;
 }

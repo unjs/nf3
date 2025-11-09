@@ -1,5 +1,9 @@
 import type { PackageJson } from "pkg-types";
-import type { ExternalsTraceOptions } from "./types.ts";
+import type {
+  ExternalsTraceOptions,
+  TracedFile,
+  TracedPackage,
+} from "./types.ts";
 import { promises as fsp } from "node:fs";
 import { platform } from "node:os";
 import { nodeFileTrace } from "@vercel/nft";
@@ -8,33 +12,14 @@ import { dirname, join, relative, resolve } from "pathe";
 import { readPackageJSON, writePackageJSON } from "pkg-types";
 import semver from "semver";
 
-type TracedFile = {
-  path: string;
-  subpath: string;
-  parents: string[];
-  pkgPath: string;
-  pkgName: string;
-  pkgVersion: string;
-};
-
-type TracedPackage = {
-  name: string;
-  versions: Record<
-    string,
-    {
-      pkgJSON: PackageJson;
-      path: string;
-      files: string[];
-    }
-  >;
-};
-
 export async function traceNodeModules(
   input: string[],
   opts: ExternalsTraceOptions,
 ) {
+  await opts?.hooks?.traceStart?.(input);
+
   // Trace used files using nft
-  const _fileTrace = await nodeFileTrace([...input], {
+  const traceResult = await nodeFileTrace([...input], {
     // https://github.com/nitrojs/nitro/pull/1562
     conditions: (opts.exportConditions || ["node", "import", "default"]).filter(
       (c) => !["require", "import", "default"].includes(c),
@@ -42,13 +27,15 @@ export async function traceNodeModules(
     ...opts.traceOptions,
   });
 
+  await opts?.hooks?.traceResult?.(traceResult);
+
   // Resolve traced files
   const _resolveTracedPath = (p: string) =>
     fsp.realpath(resolve(opts.traceOptions?.base || ".", p));
 
   const tracedFiles: Record<string, TracedFile> = Object.fromEntries(
     (await Promise.all(
-      [..._fileTrace.reasons.entries()].map(async ([_path, reasons]) => {
+      [...traceResult.reasons.entries()].map(async ([_path, reasons]) => {
         if (reasons.ignored) {
           return;
         }
@@ -83,6 +70,8 @@ export async function traceNodeModules(
       }),
     ).then((r) => r.filter(Boolean))) as [string, TracedFile][],
   );
+
+  await opts?.hooks?.tracedFiles?.(tracedFiles);
 
   // Resolve traced packages
   const tracedPackages: Record<string, TracedPackage> = {};
@@ -123,6 +112,8 @@ export async function traceNodeModules(
       tracedFile.pkgVersion = pkgJSON.version;
     }
   }
+
+  await opts?.hooks?.tracedPackages?.(tracedPackages);
 
   const usedAliases: Record<string, string> = {};
 

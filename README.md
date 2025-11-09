@@ -39,6 +39,7 @@ export default {
       // moduleDirectories: ["node_modules"],
       // traceInclude: ["some-lib"],
       // writePackageJson: true,
+      // hooks: {},
       // traceOptions: { /* see https://github.com/vercel/nft#options */ }
     }),
   ],
@@ -52,6 +53,23 @@ import { traceNodeModules } from "nf3";
 
 await traceNodeModules(["./index.mjs"], {
   /* options */
+});
+```
+
+### Hooks
+
+After the Rollup plugin traces the required files, `traceNodeModules` processes them into an optimized `node_modules` output.
+
+Each phase can be extended through hooks:
+
+```js
+rollupNodeFileTrace({
+  hooks: {
+    traceStart: (files) => {},
+    traceResult: (result) => {},
+    tracedFiles: (files) => {},
+    tracedPackages: (packages) => {},
+  },
 });
 ```
 
