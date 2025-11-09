@@ -10,7 +10,7 @@
 
 ### 🏡 Chore
 
-- Gitignore *.tgz ([47b7fcf](https://github.com/unjs/nf3/commit/47b7fcf))
+- Gitignore \*.tgz ([47b7fcf](https://github.com/unjs/nf3/commit/47b7fcf))
 
 ### ❤️ Contributors
 
