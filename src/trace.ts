@@ -152,9 +152,9 @@ export async function traceNodeModules(
         await fsp.writeFile(dst, content, "utf8");
       } else {
         await fsp.copyFile(src, dst);
-        if (opts.chmod) {
-          await fsp.chmod(dst, opts.chmod === true ? 0o644 : opts.chmod);
-        }
+      }
+      if (opts.chmod) {
+        await fsp.chmod(dst, opts.chmod === true ? 0o644 : opts.chmod);
       }
     }
 
