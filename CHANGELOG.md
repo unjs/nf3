@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.7
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.1.6...v0.1.7)
+
+### 🩹 Fixes
+
+- Fix optional types ([58bebf6](https://github.com/unjs/nf3/commit/58bebf6))
+
+### 🏡 Chore
+
+- Update readme and build config ([e42985e](https://github.com/unjs/nf3/commit/e42985e))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.1.6
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.1.5...v0.1.6)
