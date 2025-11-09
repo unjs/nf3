@@ -2,6 +2,7 @@ import { defineBuildConfig } from "obuild/config";
 import { rollupNodeFileTrace } from "./src/plugin.ts";
 import { fileURLToPath } from "node:url";
 import { minify } from "oxc-minify";
+import type { Plugin } from "rollup";
 
 export default defineBuildConfig({
   entries: ["src/index.ts"],
@@ -13,24 +14,14 @@ export default defineBuildConfig({
         import.meta.resolve("@vercel/nft"),
       );
       config.plugins ??= [];
-      config.plugins.push(
+      (config.plugins as Plugin[]).push(
         rollupNodeFileTrace({
           outDir: "dist",
           exportConditions: ["node", "import", "default"],
           transform: [
             {
               filter: (id) => /\.[mc]?js$/.test(id),
-              handler: async (code, id) => {
-                try {
-                  return minify(id, code, {}).code;
-                } catch (error) {
-                  console.error(
-                    new Error(`Minification failed for ${id}`, {
-                      cause: error,
-                    }),
-                  );
-                }
-              },
+              handler: (code, id) => minify(id, code, {}).code,
             },
           ],
           hooks: {

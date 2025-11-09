@@ -85,10 +85,8 @@ import { minify } from "oxc-minify";
 rollupNodeFileTrace({
   transform: [
     {
-      filter: (id) => /\.m?js$/.test(id),
-      handler: (code, id) => {
-        return minify(id, code).code;
-      },
+      filter: (id) => /\.[mc]?js$/.test(id),
+      handler: (code, id) => minify(id, code, {}).code,
     },
   ],
 });
