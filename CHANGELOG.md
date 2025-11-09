@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.1.6
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.1.5...v0.1.6)
+
+### 🚀 Enhancements
+
+- Trace hooks ([#8](https://github.com/unjs/nf3/pull/8))
+- Transform plugins ([#9](https://github.com/unjs/nf3/pull/9))
+
+### 🩹 Fixes
+
+- **plugin:** Exclude non js sources ([704c3d3](https://github.com/unjs/nf3/commit/704c3d3))
+
+### 💅 Refactors
+
+- Use `.nf3` for multi version dir ([3e3eeb6](https://github.com/unjs/nf3/commit/3e3eeb6))
+
+### 📦 Build
+
+- Manually exclude extra deps ([6638346](https://github.com/unjs/nf3/commit/6638346))
+- Treeshake dist packages ([9ac9152](https://github.com/unjs/nf3/commit/9ac9152))
+- Also minify `.cjs` in dist ([cf2b516](https://github.com/unjs/nf3/commit/cf2b516))
+
+### 🏡 Chore
+
+- Update build deps ([ee8a4a4](https://github.com/unjs/nf3/commit/ee8a4a4))
+- Update lockfile ([997b345](https://github.com/unjs/nf3/commit/997b345))
+- Update ci ([4d76c6c](https://github.com/unjs/nf3/commit/4d76c6c))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.1.5
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.1.4...v0.1.5)
