@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.8
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.1.7...v0.1.8)
+
+### 📦 Build
+
+- Improve dist ([4c80956](https://github.com/unjs/nf3/commit/4c80956))
+
+### 🏡 Chore
+
+- Gitignore *.tgz ([47b7fcf](https://github.com/unjs/nf3/commit/47b7fcf))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.1.7
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.1.6...v0.1.7)
