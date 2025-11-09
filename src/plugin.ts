@@ -68,9 +68,6 @@ export function rollupNodeFileTrace(opts: ExternalsPluginOptions = {}): Plugin {
     }
   };
 
-  // https://regex101.com/r/XzPbd8/1
-  const JS_SOURCE_RE = /(?<!\.d)\.[mc]?[jt]s$/;
-
   return {
     name: "nf3",
 
@@ -99,8 +96,8 @@ export function rollupNodeFileTrace(opts: ExternalsPluginOptions = {}): Plugin {
           return null;
         }
 
-        // Skip non js sources
-        if (importer && !JS_SOURCE_RE.test(basename(importer))) {
+        // Skip .d.ts sources
+        if (importer && /\.d\.[mc]?[jt]s$/.test(basename(importer))) {
           return null;
         }
 
