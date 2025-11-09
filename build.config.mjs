@@ -55,6 +55,23 @@ export default defineBuildConfig({
               for (const pkg of ignorePkgs) {
                 delete pkgs[pkg];
               }
+              const essentialFields = new Set([
+                "name",
+                "version",
+                "type",
+                "main",
+                "exports",
+                "imports",
+              ]);
+              for (const pkgGroup of Object.values(pkgs)) {
+                for (const pkg of Object.values(pkgGroup.versions)) {
+                  pkg.pkgJSON = Object.fromEntries(
+                    Object.entries(pkg.pkgJSON).filter(([key]) =>
+                      essentialFields.has(key),
+                    ),
+                  );
+                }
+              }
             },
           },
           inline: [
