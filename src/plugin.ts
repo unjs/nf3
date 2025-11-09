@@ -5,7 +5,7 @@ import { existsSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { stat } from "node:fs/promises";
 import { resolveModuleURL } from "exsolve";
-import { isAbsolute, join, normalize, resolve } from "pathe";
+import { basename, isAbsolute, join, normalize, resolve } from "pathe";
 import {
   isValidNodeImport,
   lookupNodeModuleSubpath,
@@ -68,6 +68,9 @@ export function rollupNodeFileTrace(opts: ExternalsPluginOptions = {}): Plugin {
     }
   };
 
+  // https://regex101.com/r/XzPbd8/1
+  const JS_SOURCE_RE = /(?<!\.d)\.[mc]?[jt]s$/;
+
   return {
     name: "nf3",
 
@@ -93,6 +96,11 @@ export function rollupNodeFileTrace(opts: ExternalsPluginOptions = {}): Plugin {
 
         // Skip ids with protocol (excluding windows paths like C:)
         if (/^[a-z0-9]{2,}:/i.test(originalId)) {
+          return null;
+        }
+
+        // Skip non js sources
+        if (importer && !JS_SOURCE_RE.test(basename(importer))) {
           return null;
         }
 
