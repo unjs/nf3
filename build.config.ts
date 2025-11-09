@@ -2,6 +2,8 @@ import { defineBuildConfig } from "obuild/config";
 import { rollupNodeFileTrace } from "./src/plugin.ts";
 import { fileURLToPath } from "node:url";
 import { minify } from "oxc-minify";
+import { parseNodeModulePath } from "mlly";
+
 import type { Plugin } from "rollup";
 
 export default defineBuildConfig({
@@ -18,6 +20,7 @@ export default defineBuildConfig({
         rollupNodeFileTrace({
           outDir: "dist",
           exportConditions: ["node", "import", "default"],
+          external: ["semver"],
           transform: [
             {
               filter: (id) => /\.[mc]?js$/.test(id),
@@ -75,7 +78,30 @@ export default defineBuildConfig({
             "semver",
           ],
         }),
+        {
+          name: "min-libs",
+          renderChunk(code, chunk) {
+            if (chunk.fileName.startsWith("_libs/")) {
+              return minify(chunk.fileName, code, {});
+            }
+          },
+        },
       );
+    },
+    rolldownOutput(config) {
+      config.chunkFileNames = "[name].mjs";
+      config.advancedChunks ||= {};
+      config.advancedChunks.groups = [
+        {
+          test: /node_modules/,
+          name: (moduleId) => {
+            const pkgName = parseNodeModulePath(moduleId)
+              ?.name?.split("/")
+              .pop();
+            return `_libs/${pkgName || "_common"}`;
+          },
+        },
+      ];
     },
   },
 });
