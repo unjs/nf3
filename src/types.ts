@@ -52,7 +52,10 @@ export interface ExternalsTraceOptions {
 
 export type Transformer = {
   filter: (id: string) => boolean;
-  handler: (code: string, id: string) => string | Promise<string>;
+  handler: (
+    code: string,
+    id: string,
+  ) => string | undefined | Promise<string | undefined>;
 };
 
 export interface ExternalsPluginOptions extends ExternalsTraceOptions {
@@ -112,8 +115,10 @@ export type TracedPackage = {
 };
 
 export interface TraceHooks {
-  traceStart: (files: string[]) => Promise<void>;
-  traceResult: (result: NodeFileTraceResult) => Promise<void>;
-  tracedFiles: (files: Record<string, TracedFile>) => Promise<void>;
-  tracedPackages: (packages: Record<string, TracedPackage>) => Promise<void>;
+  traceStart?: (files: string[]) => void | Promise<void>;
+  traceResult?: (result: NodeFileTraceResult) => void | Promise<void>;
+  tracedFiles?: (files: Record<string, TracedFile>) => void | Promise<void>;
+  tracedPackages?: (
+    packages: Record<string, TracedPackage>,
+  ) => void | Promise<void>;
 }
