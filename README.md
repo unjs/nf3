@@ -58,9 +58,9 @@ await traceNodeModules(["./index.mjs"], {
 
 ### Hooks
 
-After rollup plugin traced required files, `traceNodeModules` traces them into an optimized `node_modules` output.
+After the Rollup plugin traces the required files, `traceNodeModules` processes them into an optimized `node_modules` output.
 
-Each phase can be extended using hooks:
+Each phase can be extended through hooks:
 
 ```js
 rollupNodeFileTrace({
