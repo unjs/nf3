@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { traceNodeModules } from "../src/index.ts";
 import { fileURLToPath } from "node:url";
 import { cp } from "node:fs/promises";
+import type { TraceHooks } from "../src/types.ts";
 
 describe("traceNodeModules", () => {
   it("traceNodeModules", async () => {
@@ -9,7 +10,15 @@ describe("traceNodeModules", () => {
     const outDir = fileURLToPath(new URL("dist/trace", import.meta.url));
 
     await cp(input, `${outDir}/index.mjs`);
-    await traceNodeModules([input], { outDir });
+
+    const hooks: TraceHooks = {
+      traceStart: vi.fn(),
+      traceResult: vi.fn(),
+      traceFiles: vi.fn(),
+      tracedPackages: vi.fn(),
+    };
+
+    await traceNodeModules([input], { outDir, hooks });
 
     const entry = await import(`${outDir}/index.mjs`);
 
@@ -20,5 +29,10 @@ describe("traceNodeModules", () => {
       extraUtils: "@fixture/nitro-utils/extra",
       subpathLib: "@fixture/nitro-lib@2.0.0",
     });
+
+    expect(hooks.traceStart).toHaveBeenCalledOnce();
+    expect(hooks.traceResult).toHaveBeenCalledOnce();
+    expect(hooks.traceFiles).toHaveBeenCalledOnce();
+    expect(hooks.tracedPackages).toHaveBeenCalledOnce();
   });
 });
