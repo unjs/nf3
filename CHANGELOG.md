@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.9
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.1.8...v0.1.9)
+
+### 🩹 Fixes
+
+- Limit source exclude to .d.ts files ([8cb24fb](https://github.com/unjs/nf3/commit/8cb24fb))
+
+### 🏡 Chore
+
+- Apply automated updates ([50066d7](https://github.com/unjs/nf3/commit/50066d7))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.1.8
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.1.7...v0.1.8)
