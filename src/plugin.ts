@@ -14,6 +14,7 @@ import {
 } from "mlly";
 
 import { traceNodeModules } from "./trace.ts";
+import { extname } from "node:path";
 
 export function rollupNodeFileTrace(opts: ExternalsPluginOptions = {}): Plugin {
   const trackedExternals = new Set<string>();
@@ -29,17 +30,24 @@ export function rollupNodeFileTrace(opts: ExternalsPluginOptions = {}): Plugin {
     if (id.startsWith("\0")) {
       return id;
     }
-    const res = resolveModuleURL(id, {
-      try: true,
-      conditions: opts.exportConditions,
-      from:
-        importer && isAbsolute(importer)
-          ? [pathToFileURL(importer), ...moduleDirectories]
-          : moduleDirectories,
-      suffixes: ["", "/index"],
-      extensions: [".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"],
-    });
-    return res?.startsWith("file://") ? fileURLToPath(res) : res;
+    const from = importer
+      ? [isAbsolute(importer) ? pathToFileURL(importer) : importer]
+      : moduleDirectories;
+    const extensions = extname(id)
+      ? []
+      : [".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"];
+    for (const dir of from) {
+      const res = resolveModuleURL(id, {
+        try: true,
+        from: dir,
+        extensions,
+        suffixes: ["", "/index"],
+        conditions: opts.exportConditions,
+      });
+      if (res) {
+        return res.startsWith("file://") ? fileURLToPath(res) : res;
+      }
+    }
   };
 
   // Normalize options
