@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.10
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.1.9...v0.1.10)
+
+### 🔥 Performance
+
+- Reduce `tryResolve` overhead ([c87d4ea](https://github.com/unjs/nf3/commit/c87d4ea))
+
+### 🏡 Chore
+
+- Update deps ([3311ee7](https://github.com/unjs/nf3/commit/3311ee7))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.1.9
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.1.8...v0.1.9)
