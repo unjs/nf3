@@ -1,4 +1,4 @@
-import type { PackageJson } from "pkg-types";
+import type { PackageJson, PackageJsonExports } from "pkg-types";
 import type {
   ExternalsTraceOptions,
   TracedFile,
@@ -18,12 +18,20 @@ export async function traceNodeModules(
 ) {
   await opts?.hooks?.traceStart?.(input);
 
+  const exportConditions = opts.exportConditions || [
+    "node",
+    "import",
+    "default",
+  ];
+
+  const nonStandardConditions = exportConditions.filter(
+    (c) => !["require", "import", "default"].includes(c),
+  );
+
   // Trace used files using nft
   const traceResult = await nodeFileTrace([...input], {
     // https://github.com/nitrojs/nitro/pull/1562
-    conditions: (opts.exportConditions || ["node", "import", "default"]).filter(
-      (c) => !["require", "import", "default"].includes(c),
-    ),
+    conditions: nonStandardConditions,
     ...opts.traceOptions,
   });
 
@@ -160,7 +168,12 @@ export async function traceNodeModules(
 
     // Copy package.json
     const pkgJSON = pkg.versions[version]!.pkgJSON;
-    applyProductionCondition(pkgJSON.exports);
+    if (pkgJSON.exports && nonStandardConditions.length > 0) {
+      pkgJSON.exports = applyExportConditions(
+        pkgJSON.exports,
+        nonStandardConditions,
+      );
+    }
     const pkgJSONPath = join(outDir, pkgPath, "package.json");
     await fsp.mkdir(dirname(pkgJSONPath), { recursive: true });
     await fsp.writeFile(pkgJSONPath, JSON.stringify(pkgJSON, null, 2), "utf8");
@@ -307,24 +320,32 @@ function compareVersions(v1 = "0.0.0", v2 = "0.0.0") {
   }
 }
 
-export function applyProductionCondition(exports: PackageJson["exports"]) {
-  if (
-    !exports ||
-    typeof exports === "string" ||
-    Array.isArray(exports) /* TODO: unhandled */
-  ) {
-    return;
+export function applyExportConditions(
+  exports: PackageJsonExports,
+  conditions: string[],
+): PackageJsonExports {
+  if (!exports || typeof exports !== "object" || Array.isArray(exports)) {
+    return exports;
   }
-  if ("production" in exports) {
-    if (typeof exports.production === "string") {
-      exports.default = exports.production;
-    } else {
-      Object.assign(exports, exports.production);
+
+  let matched: PackageJsonExports | undefined;
+
+  const resolved: PackageJsonExports = { ...exports };
+
+  for (const [key, value] of Object.entries(exports)) {
+    if (!value) continue;
+    if (key.startsWith(".")) {
+      resolved[key] = applyExportConditions(value, conditions);
+    } else if (!matched && conditions.includes(key)) {
+      matched = applyExportConditions(value, conditions);
     }
   }
-  for (const key in exports) {
-    applyProductionCondition(exports[key as keyof typeof exports]);
+  for (const c of conditions) {
+    delete resolved[c];
   }
+  resolved["default"] = matched || resolved["default"];
+
+  return resolved;
 }
 
 async function isFile(file: string) {
