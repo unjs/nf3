@@ -24,14 +24,12 @@ export async function traceNodeModules(
     "default",
   ];
 
-  const nonStandardConditions = exportConditions.filter(
-    (c) => !["require", "import", "default"].includes(c),
-  );
-
   // Trace used files using nft
   const traceResult = await nodeFileTrace([...input], {
     // https://github.com/nitrojs/nitro/pull/1562
-    conditions: nonStandardConditions,
+    conditions: exportConditions.filter(
+      (c) => !["require", "import", "default"].includes(c),
+    ),
     ...opts.traceOptions,
   });
 
@@ -168,10 +166,10 @@ export async function traceNodeModules(
 
     // Copy package.json
     const pkgJSON = pkg.versions[version]!.pkgJSON;
-    if (pkgJSON.exports && nonStandardConditions.length > 0) {
+    if (pkgJSON.exports) {
       pkgJSON.exports = applyExportConditions(
         pkgJSON.exports,
-        nonStandardConditions,
+        exportConditions,
       );
     }
     const pkgJSONPath = join(outDir, pkgPath, "package.json");
@@ -343,9 +341,14 @@ export function applyExportConditions(
   for (const c of conditions) {
     delete resolved[c];
   }
-  resolved["default"] = matched || resolved["default"];
+  if (matched) {
+    if (Object.keys(resolved).length === 0) {
+      return matched;
+    }
+    resolved["default"] = matched;
+  }
 
-  return resolved;
+  return matched ? Object.assign({ default: matched }, resolved) : resolved;
 }
 
 async function isFile(file: string) {

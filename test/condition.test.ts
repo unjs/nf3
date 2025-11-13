@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { applyProductionCondition } from "../src/trace.ts";
+import { applyExportConditions } from "../src/trace.ts";
 
-describe("externals:applyProductionCondition", () => {
+describe("externals:applyExportConditions", () => {
   const applyProductionConditionCases = [
     {
       name: "vue-router@4.1.6",
@@ -39,7 +39,7 @@ describe("externals:applyProductionCondition", () => {
             require: {
               production: "./dist/vue-router.prod.cjs",
               development: "./dist/vue-router.cjs",
-              default: "./dist/vue-router.prod.cjs",
+              default: "./index.js",
             },
           },
           import: "./dist/vue-router.mjs",
@@ -65,21 +65,22 @@ describe("externals:applyProductionCondition", () => {
       },
       out: {
         ".": {
-          import: "./dist/prod/index.mjs",
-          production: {
-            import: "./dist/prod/index.mjs",
+          default: {
             require: "./dist/prod/index.cjs",
+            import: "./dist/prod/index.mjs",
           },
-          require: "./dist/prod/index.cjs",
           types: "./index.d.ts",
+          require: "./dist/index.cjs",
+          import: "./dist/index.mjs",
         },
       },
     },
   ];
   for (const t of applyProductionConditionCases) {
     it(t.name, () => {
-      applyProductionCondition(t.in as any);
-      expect(t.in).toEqual(t.out);
+      const out = applyExportConditions(t.in as any, ["production"]);
+      // console.log(JSON.stringify(out, null, 2));
+      expect(out).toEqual(t.out);
     });
   }
 });
