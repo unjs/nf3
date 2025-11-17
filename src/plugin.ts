@@ -236,27 +236,27 @@ type Matcher = ((
 
 function normalizeMatcher(input: string | RegExp | Matcher): Matcher {
   if (typeof input === "function") {
-    input.score = 20_000 + input.toString().length;
+    input.score = 30_000 + input.toString().length;
     return input;
+  }
+
+  if (typeof input === "string") {
+    const pattern = normalize(input);
+    const matcher = ((id: string) => {
+      return (
+        id.startsWith(pattern) ||
+        id.split("node_modules/").pop()?.startsWith(pattern)
+      );
+    }) as Matcher;
+    matcher.score = 20_000 + input.length;
+    Object.defineProperty(matcher, "name", { value: `match(${pattern})` });
+    return matcher;
   }
 
   if (input instanceof RegExp) {
     const matcher = ((id: string) => input.test(id)) as Matcher;
     matcher.score = 10_000 + input.toString().length;
     Object.defineProperty(matcher, "name", { value: `match(${input})` });
-    return matcher;
-  }
-
-  if (typeof input === "string") {
-    const pattern = normalize(input);
-    const matcher = ((id: string) => {
-      const idWithoutNodeModules = id.split("node_modules/").pop();
-      return (
-        id.startsWith(pattern) || idWithoutNodeModules?.startsWith(pattern)
-      );
-    }) as Matcher;
-    matcher.score = input.length;
-    Object.defineProperty(matcher, "name", { value: `match(${pattern})` });
     return matcher;
   }
 
