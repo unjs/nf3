@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.2.0
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.1.11...v0.2.0)
+
+### 🩹 Fixes
+
+- ⚠️  Prioritize string patterns over regexp ([97e764b](https://github.com/unjs/nf3/commit/97e764b))
+
+#### ⚠️ Breaking Changes
+
+- ⚠️  Prioritize string patterns over regexp ([97e764b](https://github.com/unjs/nf3/commit/97e764b))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.1.11
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.1.10...v0.1.11)
