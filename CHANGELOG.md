@@ -6,11 +6,11 @@
 
 ### 🩹 Fixes
 
-- ⚠️  Prioritize string patterns over regexp ([97e764b](https://github.com/unjs/nf3/commit/97e764b))
+- ⚠️ Prioritize string patterns over regexp ([97e764b](https://github.com/unjs/nf3/commit/97e764b))
 
 #### ⚠️ Breaking Changes
 
-- ⚠️  Prioritize string patterns over regexp ([97e764b](https://github.com/unjs/nf3/commit/97e764b))
+- ⚠️ Prioritize string patterns over regexp ([97e764b](https://github.com/unjs/nf3/commit/97e764b))
 
 ### ❤️ Contributors
 
