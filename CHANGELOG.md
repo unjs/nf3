@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.11
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.1.10...v0.1.11)
+
+### 🩹 Fixes
+
+- Prioritize regex matchers ([43ecddd](https://github.com/unjs/nf3/commit/43ecddd))
+
+### 🏡 Chore
+
+- Update deps ([40dd864](https://github.com/unjs/nf3/commit/40dd864))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.1.10
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.1.9...v0.1.10)
