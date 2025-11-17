@@ -236,13 +236,13 @@ type Matcher = ((
 
 function normalizeMatcher(input: string | RegExp | Matcher): Matcher {
   if (typeof input === "function") {
-    input.score = input.score ?? 10_000;
+    input.score = 20_000 + input.toString().length;
     return input;
   }
 
   if (input instanceof RegExp) {
     const matcher = ((id: string) => input.test(id)) as Matcher;
-    matcher.score = input.toString().length;
+    matcher.score = 10_000 + input.toString().length;
     Object.defineProperty(matcher, "name", { value: `match(${input})` });
     return matcher;
   }
@@ -256,13 +256,6 @@ function normalizeMatcher(input: string | RegExp | Matcher): Matcher {
       );
     }) as Matcher;
     matcher.score = input.length;
-
-    // Increase score for npm package names to avoid breaking changes
-    // TODO: Remove in next major version
-    if (!isAbsolute(input) && input[0] !== ".") {
-      matcher.score += 1000;
-    }
-
     Object.defineProperty(matcher, "name", { value: `match(${pattern})` });
     return matcher;
   }
