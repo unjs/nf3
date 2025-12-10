@@ -17,7 +17,7 @@ export default defineBuildConfig({
       config.plugins ??= [];
       (config.plugins as Plugin[]).push(
         externals({
-          exclude: [/pkg-types|confbox|exsolve|pathe|ufo|semver/],
+          exclude: [/pkg-types|confbox|exsolve|pathe/],
           trace: {
             transform: [
               {
@@ -32,7 +32,7 @@ export default defineBuildConfig({
                   "agent-base", "chownr", "debug", "has-flag", "https-proxy-agent",
                   "@isaacs/balanced-match", "@isaacs/fs-minipass", "@isaacs/brace-expansion",
                   "minizlib", "ms", "node-fetch", "supports-color", "tar", "tr46",
-                  "webidl-conversions", "whatwg-url", "yallist"
+                  "webidl-conversions", "whatwg-url", "yallist" , "rollup"
                 ];
                 for (const pkg of ignorePkgs) {
                   delete pkgs[pkg];
