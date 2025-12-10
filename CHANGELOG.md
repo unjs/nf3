@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.3.0
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.2.0...v0.3.0)
+
+### 🚀 Enhancements
+
+- ⚠️  Rewrite plugin ([#14](https://github.com/unjs/nf3/pull/14))
+
+### 🏡 Chore
+
+- Apply automated updates ([c61a383](https://github.com/unjs/nf3/commit/c61a383))
+- Update dependencies ([e0b1711](https://github.com/unjs/nf3/commit/e0b1711))
+- Update build script ([e99969a](https://github.com/unjs/nf3/commit/e99969a))
+
+#### ⚠️ Breaking Changes
+
+- ⚠️  Rewrite plugin ([#14](https://github.com/unjs/nf3/pull/14))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.2.0
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.1.11...v0.2.0)
