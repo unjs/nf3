@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { isAbsolute, join } from "pathe";
+import { isAbsolute, join, normalize } from "pathe";
 
 import type { PackageJson } from "pkg-types";
 
@@ -24,7 +24,7 @@ export function toImport(id: string): string | undefined {
     if (name && subpath) {
       return join(name, subpath);
     }
-  } else if (IMPORT_RE.test(id)) {
+  } else if (IMPORT_RE.test(normalize(id))) {
     return id;
   }
 }
@@ -33,7 +33,8 @@ export function guessSubpath(
   path: string,
   conditions: string[],
 ): string | undefined {
-  const { dir, name, subpath } = NODE_MODULES_RE.exec(path)?.groups || {};
+  const { dir, name, subpath } =
+    NODE_MODULES_RE.exec(normalize(path))?.groups || {};
   if (!dir || !name || !subpath) {
     return;
   }
