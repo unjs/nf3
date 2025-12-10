@@ -6,7 +6,7 @@
 
 ### 🚀 Enhancements
 
-- ⚠️  Rewrite plugin ([#14](https://github.com/unjs/nf3/pull/14))
+- ⚠️ Rewrite plugin ([#14](https://github.com/unjs/nf3/pull/14))
 
 ### 🏡 Chore
 
@@ -16,7 +16,7 @@
 
 #### ⚠️ Breaking Changes
 
-- ⚠️  Rewrite plugin ([#14](https://github.com/unjs/nf3/pull/14))
+- ⚠️ Rewrite plugin ([#14](https://github.com/unjs/nf3/pull/14))
 
 ### ❤️ Contributors
 
