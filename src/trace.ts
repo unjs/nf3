@@ -1,37 +1,45 @@
+import { promises as fsp } from "node:fs";
+import { nodeFileTrace } from "@vercel/nft";
+import { dirname, join, relative, resolve } from "pathe";
+import { readPackageJSON, writePackageJSON } from "pkg-types";
+import semver from "semver";
+import { isWindows, parseNodeModulePath } from "./_utils.ts";
+
 import type { PackageJson } from "pkg-types";
 import type {
   ExternalsTraceOptions,
   TracedFile,
   TracedPackage,
 } from "./types.ts";
-import { promises as fsp } from "node:fs";
-import { platform } from "node:os";
-import { nodeFileTrace } from "@vercel/nft";
-import { parseNodeModulePath } from "mlly";
-import { dirname, join, relative, resolve } from "pathe";
-import { readPackageJSON, writePackageJSON } from "pkg-types";
-import semver from "semver";
+export type { ExternalsTraceOptions } from "./types.ts";
+
+export const DEFAULT_CONDITIONS = ["node", "import", "default"];
 
 export async function traceNodeModules(
   input: string[],
   opts: ExternalsTraceOptions,
 ) {
+  const rootDir = resolve(opts.rootDir || ".");
+
   await opts?.hooks?.traceStart?.(input);
 
   // Trace used files using nft
   const traceResult = await nodeFileTrace([...input], {
+    base: "/",
+    exportsOnly: true,
+    processCwd: rootDir,
     // https://github.com/nitrojs/nitro/pull/1562
-    conditions: (opts.exportConditions || ["node", "import", "default"]).filter(
+    conditions: (opts.conditions || DEFAULT_CONDITIONS).filter(
       (c) => !["require", "import", "default"].includes(c),
     ),
-    ...opts.traceOptions,
+    ...opts.nft,
   });
 
   await opts?.hooks?.traceResult?.(traceResult);
 
   // Resolve traced files
   const _resolveTracedPath = (p: string) =>
-    fsp.realpath(resolve(opts.traceOptions?.base || ".", p));
+    fsp.realpath(resolve(opts.nft?.base || "/", p));
 
   const tracedFiles: Record<string, TracedFile> = Object.fromEntries(
     (await Promise.all(
@@ -61,7 +69,6 @@ export async function traceNodeModules(
         const tracedFile = <TracedFile>{
           path,
           parents,
-
           subpath,
           pkgName,
           pkgPath,
@@ -117,11 +124,7 @@ export async function traceNodeModules(
 
   const usedAliases: Record<string, string> = {};
 
-  const outDir = resolve(
-    opts.rootDir || ".",
-    opts.outDir || "dist",
-    "node_modules",
-  );
+  const outDir = resolve(rootDir, opts.outDir || "dist", "node_modules");
 
   const writePackage = async (
     name: string,
@@ -172,7 +175,6 @@ export async function traceNodeModules(
     }
   };
 
-  const isWindows = platform() === "win32";
   const linkPackage = async (from: string, to: string) => {
     const src = join(outDir, from);
     const dst = join(outDir, to);
@@ -307,7 +309,7 @@ function compareVersions(v1 = "0.0.0", v2 = "0.0.0") {
   }
 }
 
-export function applyProductionCondition(exports: PackageJson["exports"]) {
+function applyProductionCondition(exports: PackageJson["exports"]) {
   if (
     !exports ||
     typeof exports === "string" ||
