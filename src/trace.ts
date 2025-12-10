@@ -39,7 +39,7 @@ export async function traceNodeModules(
 
   // Resolve traced files
   const _resolveTracedPath = (p: string) =>
-    fsp.realpath(resolve(opts.nft?.base || "/", p)).then(p => normalize(p));
+    fsp.realpath(resolve(opts.nft?.base || "/", p)).then((p) => normalize(p));
 
   const tracedFiles: Record<string, TracedFile> = Object.fromEntries(
     (await Promise.all(

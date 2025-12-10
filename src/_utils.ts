@@ -5,7 +5,8 @@ import type { PackageJson } from "pkg-types";
 
 export const isWindows = process.platform === "win32";
 
-const NODE_MODULES_RE = /^(?<dir>.+[\\/]node_modules[\\/])(?<name>[^@\\/]+|@[^\\/]+[\\/][^\\/]+)(?:[\\/](?<subpath>.+))?$/;
+const NODE_MODULES_RE =
+  /^(?<dir>.+[\\/]node_modules[\\/])(?<name>[^@\\/]+|@[^\\/]+[\\/][^\\/]+)(?:[\\/](?<subpath>.+))?$/;
 
 export function parseNodeModulePath(path: string): {
   dir?: string;
@@ -15,7 +16,8 @@ export function parseNodeModulePath(path: string): {
   return NODE_MODULES_RE.exec(path)?.groups || {};
 }
 
-const IMPORT_RE = /^(?!\.)(?<name>[^@\/\\]+|@[^\/\\]+[\/\\][^\/\\]+)(?:[\/\\](?<subpath>.+))?$/;
+const IMPORT_RE =
+  /^(?!\.)(?<name>[^@/\\]+|@[^/\\]+[/\\][^/\\]+)(?:[/\\](?<subpath>.+))?$/;
 
 export function toImport(id: string): string | undefined {
   if (isAbsolute(id)) {
