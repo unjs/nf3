@@ -1,8 +1,12 @@
 name: checks
 on: { push: {}, pull_request: {} }
+
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix: { os: [ubuntu-latest, windows-latest] }
+
     steps:
       - uses: actions/checkout@v6
       - run: npm i -fg corepack && corepack enable
@@ -10,6 +14,7 @@ jobs:
         with: { node-version: lts/*, cache: "pnpm" }
       - run: pnpm install
       - run: pnpm run lint
+        if: runner.os == 'Linux'
       - run: pnpm vitest --coverage
       - uses: codecov/codecov-action@v5
         with: { token: "${{ secrets.CODECOV_TOKEN }}" }
