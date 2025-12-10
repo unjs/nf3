@@ -13,6 +13,7 @@ jobs:
       - uses: actions/setup-node@v6
         with: { node-version: lts/*, cache: "pnpm" }
       - run: pnpm install
+      - run: pnpm run build
       - run: pnpm run lint
         if: runner.os == 'Linux'
       - run: pnpm vitest --coverage
