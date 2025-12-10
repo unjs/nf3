@@ -25,27 +25,27 @@
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.10.2",
     "@types/semver": "^7.7.1",
-    "@vercel/nft": "^0.30.3",
-    "@vitest/coverage-v8": "^4.0.9",
+    "@vercel/nft": "^1.1.1",
+    "@vitest/coverage-v8": "^4.0.15",
     "automd": "^0.4.2",
     "changelogen": "^0.6.2",
     "eslint": "^9.39.1",
     "eslint-config-unjs": "^0.5.0",
     "exsolve": "^1.0.8",
     "mlly": "^1.8.0",
-    "obuild": "^0.4.1",
-    "oxc-minify": "^0.97.0",
+    "obuild": "^0.4.7",
+    "oxc-minify": "^0.102.0",
     "pathe": "^2.0.3",
     "pkg-types": "^2.3.0",
-    "prettier": "^3.6.2",
-    "rolldown": "^1.0.0-beta.50",
-    "rollup": "^4.53.2",
+    "prettier": "^3.7.4",
+    "rolldown": "^1.0.0-beta.53",
+    "rollup": "^4.53.3",
     "rollup-plugin-esbuild": "^6.2.1",
     "semver": "^7.7.3",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.9"
+    "vitest": "^4.0.15"
   },
-  "packageManager": "pnpm@10.22.0"
+  "packageManager": "pnpm@10.25.0"
 }
