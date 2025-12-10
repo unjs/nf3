@@ -1,6 +1,6 @@
 import { promises as fsp } from "node:fs";
 import { nodeFileTrace } from "@vercel/nft";
-import { dirname, join, relative, resolve } from "pathe";
+import { dirname, join, normalize, relative, resolve } from "pathe";
 import { readPackageJSON, writePackageJSON } from "pkg-types";
 import semver from "semver";
 import { isWindows, parseNodeModulePath } from "./_utils.ts";
@@ -39,7 +39,7 @@ export async function traceNodeModules(
 
   // Resolve traced files
   const _resolveTracedPath = (p: string) =>
-    fsp.realpath(resolve(opts.nft?.base || "/", p));
+    fsp.realpath(resolve(opts.nft?.base || "/", p)).then(p => normalize(p));
 
   const tracedFiles: Record<string, TracedFile> = Object.fromEntries(
     (await Promise.all(
