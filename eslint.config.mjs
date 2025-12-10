@@ -4,6 +4,7 @@ export default unjs({
   ignores: ["**/dist/**"],
   rules: {
     "unicorn/no-null": "off",
+    "eslint/no-control-regex": "off",
   },
   markdown: {
     rules: {},

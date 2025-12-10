@@ -1,5 +1,4 @@
 import { describe, it } from "vitest";
-import { rollupNodeFileTrace } from "../src/index.ts";
 import { fileURLToPath } from "node:url";
 import { builtinModules } from "node:module";
 import * as rolldown from "rolldown";
@@ -7,6 +6,8 @@ import * as rollup from "rollup";
 import esbuild from "rollup-plugin-esbuild";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import { rm } from "node:fs/promises";
+
+import { externals } from "../src/plugin.ts";
 
 describe("plugin", () => {
   const pkgDir = fileURLToPath(new URL("../", import.meta.url));
@@ -22,11 +23,7 @@ describe("plugin", () => {
       input,
       output: { format: "esm" },
       external: [...builtinModules, ...builtinModules.map((m) => `node:${m}`)],
-      plugins: [
-        rollupNodeFileTrace({ rootDir: pkgDir }),
-        nodeResolve({}),
-        esbuild(),
-      ],
+      plugins: [externals({ rootDir: pkgDir }), nodeResolve({}), esbuild()],
     });
     await out.write({
       dir: fileURLToPath(new URL("dist/rollup", import.meta.url)),
@@ -46,7 +43,7 @@ describe("plugin", () => {
         format: "esm",
       },
       external: [...builtinModules, ...builtinModules.map((m) => `node:${m}`)],
-      plugins: [rollupNodeFileTrace({ rootDir: pkgDir })],
+      plugins: [externals({ rootDir: pkgDir })],
     });
   });
 });

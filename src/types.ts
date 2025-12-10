@@ -1,6 +1,41 @@
 import type { NodeFileTraceOptions, NodeFileTraceResult } from "@vercel/nft";
 import type { PackageJson } from "pkg-types";
 
+export interface ExternalsPluginOptions {
+  /**
+   * The root directory to use when resolving files. Defaults to `process.cwd()`.
+   */
+  rootDir?: string;
+
+  /**
+   * Patterns to trace or externalize.
+   */
+  include?: (string | RegExp)[];
+
+  /**
+   * Patterns to exclude from tracing or externalizing (makes them to be bundled).
+   */
+  exclude?: (string | RegExp)[];
+
+  /**
+   *
+   * Tracing options.
+   *
+   * If `false`, disables automatic tracing of `node_modules` dependencies and keeps them as absolute external paths.
+   */
+  trace?: boolean | ExternalsTraceOptions;
+
+  /**
+   * Patterns to force trace even if not resolved.
+   */
+  traceInclude?: string[];
+
+  /**
+   * Resolve conditions to use when resolving packages. Defaults to `["node", "import", "default"]`
+   */
+  conditions?: string[];
+}
+
 export interface ExternalsTraceOptions {
   /**
    * The root directory to use when resolving files. Defaults to `process.cwd()`.
@@ -17,14 +52,14 @@ export interface ExternalsTraceOptions {
    *
    * @see https://github.com/vercel/nft#options
    */
-  traceOptions?: NodeFileTraceOptions;
+  nft?: NodeFileTraceOptions;
 
   /**
    * Module resolution conditions to use when resolving packages.
    *
    * Defaults to `["node", "import", "default"]`
    */
-  exportConditions?: string[];
+  conditions?: string[];
 
   /**
    * Alias for module paths when tracing files.
@@ -57,41 +92,6 @@ export type Transformer = {
     id: string,
   ) => string | undefined | Promise<string | undefined>;
 };
-
-export interface ExternalsPluginOptions extends ExternalsTraceOptions {
-  /**
-   * If `true`, disables automatic tracing of `node_modules` dependencies and keeps them as absolute external paths.
-   */
-  noTrace?: boolean;
-
-  /**
-   * Patterns to always include (inline) instead of tracing them as externals.
-   */
-  inline?: Array<
-    | string
-    | RegExp
-    | ((id: string, importer?: string) => Promise<boolean> | boolean)
-  >;
-
-  /**
-   * Patterns to always exclude (trace) instead of inlining them as externals.
-   */
-  external?: Array<
-    | string
-    | RegExp
-    | ((id: string, importer?: string) => Promise<boolean> | boolean)
-  >;
-
-  /**
-   * `node_modules` directories to use when resolving packages. Defaults to `['node_modules']`.
-   */
-  moduleDirectories?: string[];
-
-  /**
-   * Patterns to always include (trace) even if not resolved.
-   */
-  traceInclude?: string[];
-}
 
 export type TracedFile = {
   path: string;

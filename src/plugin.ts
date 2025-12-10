@@ -1,272 +1,142 @@
+import { pathToFileURL } from "node:url";
+import { builtinModules } from "node:module";
+import { isAbsolute, resolve } from "pathe";
+import { resolveModulePath } from "exsolve";
+import { guessSubpath, toImport, pathRegExp, toPathRegExp } from "./_utils.ts";
+import { DEFAULT_CONDITIONS } from "./trace.ts";
+
 import type { Plugin } from "rollup";
 import type { ExternalsPluginOptions } from "./types.ts";
+export type { ExternalsPluginOptions } from "./types.ts";
 
-import { existsSync } from "node:fs";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { stat } from "node:fs/promises";
-import { resolveModuleURL } from "exsolve";
-import { basename, isAbsolute, join, normalize, resolve } from "pathe";
-import {
-  isValidNodeImport,
-  lookupNodeModuleSubpath,
-  normalizeid,
-  parseNodeModulePath,
-} from "mlly";
+const PLUGIN_NAME = "nitro:externals";
 
-import { traceNodeModules } from "./trace.ts";
-import { extname } from "node:path";
+export function externals(opts: ExternalsPluginOptions): Plugin {
+  const rootDir = resolve(opts.rootDir || ".");
 
-export function rollupNodeFileTrace(opts: ExternalsPluginOptions = {}): Plugin {
-  const trackedExternals = new Set<string>();
+  const include: RegExp[] | undefined = opts?.include
+    ? opts.include.map((p) => toPathRegExp(p))
+    : undefined;
 
-  const moduleDirectories = opts.moduleDirectories || [
-    resolve(opts.rootDir || ".", "node_modules") + "/",
+  const exclude: RegExp[] = [
+    /^(?:[\0#~.]|[a-z0-9]{2,}:)|\?/,
+    new RegExp("^" + pathRegExp(rootDir) + "(?!.*node_modules)"),
+    ...(opts?.exclude || []).map((p) => toPathRegExp(p)),
   ];
 
-  const tryResolve = (
-    id: string,
-    importer: undefined | string,
-  ): string | undefined => {
-    if (id.startsWith("\0")) {
-      return id;
+  const filter = (id: string) => {
+    // Most match at least one include (if specified)
+    if (include && !include.some((r) => r.test(id))) {
+      return false;
     }
-    const from = importer
-      ? [isAbsolute(importer) ? pathToFileURL(importer) : importer]
-      : moduleDirectories;
-    const extensions = extname(id)
-      ? []
-      : [".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"];
-    for (const dir of from) {
-      const res = resolveModuleURL(id, {
-        try: true,
-        from: dir,
-        extensions,
-        suffixes: ["", "/index"],
-        conditions: opts.exportConditions,
-      });
-      if (res) {
-        return res.startsWith("file://") ? fileURLToPath(res) : res;
-      }
+    // Most not match any exclude
+    if (exclude.some((r) => r.test(id))) {
+      return false;
     }
+    return true;
   };
 
-  // Normalize options
-  const inlineMatchers = (opts.inline || [])
-    .map((p) => normalizeMatcher(p))
-    .sort((a, b) => (b.score || 0) - (a.score || 0));
+  const tryResolve = (id: string, from: string | undefined) =>
+    resolveModulePath(id, {
+      try: true,
+      from: from && isAbsolute(from) ? from : rootDir,
+      conditions: opts.conditions,
+    });
 
-  const externalMatchers = (opts.external || [])
-    .map((p) => normalizeMatcher(p))
-    .sort((a, b) => (b.score || 0) - (a.score || 0));
-
-  // Utility to check explicit inlines
-  const isExplicitInline = (id: string, importer?: string) => {
-    if (id.startsWith("\0")) {
-      return true;
-    }
-    const inlineMatch = inlineMatchers.find((m) => m(id, importer));
-    const externalMatch = externalMatchers.find((m) => m(id, importer));
-    if (
-      inlineMatch &&
-      (!externalMatch ||
-        (externalMatch &&
-          (inlineMatch.score || 0) > (externalMatch.score || 0)))
-    ) {
-      return true;
-    }
-  };
+  const tracedPaths = new Set<string>();
 
   return {
-    name: "nf3",
-
+    name: PLUGIN_NAME,
     resolveId: {
       order: "pre",
-      // TODO
-      // filter: { id: { exclude: [] } },
-      async handler(originalId, importer, options) {
-        // Skip internals
-        if (
-          !originalId ||
-          originalId.startsWith("\u0000") ||
-          originalId.includes("?") ||
-          originalId.startsWith("#")
-        ) {
-          return null;
-        }
-
-        // Skip relative paths
-        if (originalId.startsWith(".")) {
-          return null;
-        }
-
-        // Skip ids with protocol (excluding windows paths like C:)
-        if (/^[a-z0-9]{2,}:/i.test(originalId)) {
-          return null;
-        }
-
-        // Skip .d.ts sources
-        if (importer && /\.d\.[mc]?[jt]s$/.test(basename(importer))) {
-          return null;
-        }
-
-        // Normalize path (windows)
-        const id = normalize(originalId);
-
-        // Check for explicit inline and externals
-        if (isExplicitInline(id, importer)) {
-          return null;
-        }
-
-        // Resolve id using rollup resolver
-        const resolved = (await this.resolve(
-          originalId,
-          importer,
-          options,
-        )) || {
-          id,
-        };
-
-        // Check for explicit inlines and externals
-        if (isExplicitInline(resolved.id, importer)) {
-          return null;
-        }
-
-        // Try resolving with Node.js algorithm as fallback
-        if (
-          !isAbsolute(resolved.id) ||
-          !existsSync(resolved.id) ||
-          (await isDirectory(resolved.id))
-        ) {
-          resolved.id = tryResolve(resolved.id, importer) || resolved.id;
-        }
-
-        // Inline invalid node imports
-        if (!(await isValidNodeImport(resolved.id).catch(() => false))) {
-          return null;
-        }
-
-        // Externalize with full path if trace is disabled
-        if (opts.noTrace) {
+      filter: { id: { exclude, include } },
+      async handler(id, importer, rOpts) {
+        // Externalize built-in modules with normalized prefix
+        if (builtinModules.includes(id)) {
           return {
-            ...resolved,
-            id: isAbsolute(resolved.id)
-              ? normalizeid(resolved.id)
-              : resolved.id,
+            resolvedBy: PLUGIN_NAME,
             external: true,
+            id: id.includes(":") ? id : `node:${id}`,
           };
         }
 
-        // -- Trace externals --
-
-        // Try to extract package name from path
-        const { name: pkgName } = parseNodeModulePath(resolved.id);
-
-        // Inline if cannot detect package name
-        if (!pkgName) {
+        // Skip nested rollup-node resolutions
+        if (rOpts.custom?.["node-resolve"]) {
           return null;
         }
 
-        // Normally package name should be same as originalId
-        // Edge cases: Subpath export and full paths
-        if (pkgName !== originalId) {
-          // Subpath export
-          if (!isAbsolute(originalId)) {
-            const fullPath = tryResolve(originalId, importer);
-            if (fullPath) {
-              trackedExternals.add(fullPath);
-              return {
-                id: originalId,
-                external: true,
-              };
-            }
-          }
+        // Resolve by other resolvers
+        let resolved = await this.resolve(id, importer, rOpts);
 
-          // Absolute path, we are not sure about subpath to generate import statement
-          // Guess as main subpath export
-          const packageEntry = tryResolve(pkgName, importer);
-          if (packageEntry !== id) {
-            // Reverse engineer subpath export
-            const guessedSubpath: string | null | undefined =
-              await lookupNodeModuleSubpath(id).catch(() => null);
-            const resolvedGuess =
-              guessedSubpath &&
-              tryResolve(join(pkgName, guessedSubpath), importer);
-            if (resolvedGuess === id) {
-              trackedExternals.add(resolvedGuess);
-              return {
-                id: join(pkgName, guessedSubpath!),
-                external: true,
-              };
-            }
-            // Inline since we cannot guess subpath
-            return null;
+        // Skip rolldown-plugin-commonjs resolver for externals
+        const cjsResolved = resolved?.meta?.commonjs?.resolved;
+        if (cjsResolved) {
+          if (!filter(cjsResolved.id)) {
+            return resolved; // Bundled and wrapped by CJS plugin
           }
+          resolved = cjsResolved /* non-wrapped */;
         }
 
-        trackedExternals.add(resolved.id);
+        // Check if not resolved or explicitly marked as excluded
+        if (!resolved?.id || !filter(resolved!.id)) {
+          return resolved;
+        }
+
+        // Normalize to absolute path
+        let resolvedPath = resolved.id;
+        if (!isAbsolute(resolvedPath)) {
+          resolvedPath = tryResolve(resolvedPath, importer) || resolvedPath;
+        }
+
+        // Tracing mode
+        if (opts.trace !== false) {
+          let importId = toImport(id) || toImport(resolvedPath);
+          if (!importId) {
+            return resolved;
+          }
+          if (!tryResolve(importId, importer)) {
+            const guessed = await guessSubpath(
+              resolvedPath,
+              opts.conditions || DEFAULT_CONDITIONS,
+            );
+            if (!guessed) {
+              return resolved;
+            }
+            importId = guessed;
+          }
+          tracedPaths.add(resolvedPath);
+          return {
+            ...resolved,
+            resolvedBy: PLUGIN_NAME,
+            external: true,
+            id: importId,
+          };
+        }
+
+        // Resolve as absolute path external
         return {
-          id: pkgName,
+          ...resolved,
+          resolvedBy: PLUGIN_NAME,
           external: true,
+          id: isAbsolute(resolvedPath)
+            ? pathToFileURL(resolvedPath).href // windows compat
+            : resolvedPath,
         };
       },
     },
-
     buildEnd: {
       order: "post",
       async handler() {
-        if (opts.noTrace) {
+        if (opts.trace === false || tracedPaths.size === 0) {
           return;
         }
-        for (const pkgName of opts.traceInclude || []) {
-          const path = await this.resolve(pkgName);
-          if (path?.id) {
-            trackedExternals.add(path.id.replace(/\?.+/, ""));
-          }
-        }
-        await traceNodeModules([...trackedExternals], opts);
+        const { traceNodeModules } = await import("./trace.ts");
+        await traceNodeModules([...tracedPaths], {
+          conditions: opts.conditions,
+          rootDir,
+          ...(opts.trace === true ? {} : opts.trace),
+        });
       },
     },
   };
-}
-
-type Matcher = ((
-  id: string,
-  importer?: string,
-) => Promise<boolean> | boolean) & { score?: number };
-
-function normalizeMatcher(input: string | RegExp | Matcher): Matcher {
-  if (typeof input === "function") {
-    input.score = 30_000 + input.toString().length;
-    return input;
-  }
-
-  if (typeof input === "string") {
-    const pattern = normalize(input);
-    const matcher = ((id: string) => {
-      return (
-        id.startsWith(pattern) ||
-        id.split("node_modules/").pop()?.startsWith(pattern)
-      );
-    }) as Matcher;
-    matcher.score = 20_000 + input.length;
-    Object.defineProperty(matcher, "name", { value: `match(${pattern})` });
-    return matcher;
-  }
-
-  if (input instanceof RegExp) {
-    const matcher = ((id: string) => input.test(id)) as Matcher;
-    matcher.score = 10_000 + input.toString().length;
-    Object.defineProperty(matcher, "name", { value: `match(${input})` });
-    return matcher;
-  }
-
-  throw new Error(`Invalid matcher or pattern: ${input}`);
-}
-
-async function isDirectory(path: string) {
-  try {
-    return (await stat(path)).isDirectory();
-  } catch {
-    return false;
-  }
 }

@@ -20,40 +20,38 @@ Originally extracted from [Nitro](https://nitro.build) and used for optimizing `
 
 ## Usage
 
-### Rollup/Rolldown plugin
-
-```js
-import { rollupNodeFileTrace } from "nf3";
-
-export default {
-  plugins: [
-    rollupNodeFileTrace({
-      // rootDir: process.cwd(),
-      // outDir: "dist",
-      // exportConditions: ["node", "import", "default"],
-      // traceAlias: {},
-      // chmod: true, // or 0o755
-      // noTrace: false,
-      // inline: [/^@my-scope\//],
-      // external: ["fsevents"],
-      // moduleDirectories: ["node_modules"],
-      // traceInclude: ["some-lib"],
-      // writePackageJson: true,
-      // hooks: {},
-      // traceOptions: { /* see https://github.com/vercel/nft#options */ }
-    }),
-  ],
-};
-```
-
 ### API
 
 ```js
 import { traceNodeModules } from "nf3";
 
 await traceNodeModules(["./index.mjs"], {
-  /* options */
+  //   outDir: "dist",
+  // chmod: 0o755,
+  // writePackageJson: true,
+  // traceAlias: {},
+  // hooks: {},
+  // nft: {}, // https://github.com/vercel/nft#options
 });
+```
+
+### Rollup/Rolldown/Vite Plugin
+
+```js
+import { externals } from "nf3/plugin";
+
+export default {
+  plugins: [
+    externals({
+      // rootDir: ".",
+      // conditions: ["node", "import", "default"],
+      // include: [/^@my-scope\//],
+      // exclude: ["fsevents"],
+      // traceInclude: ["some-lib"],
+      // trace: {}
+    }),
+  ],
+};
 ```
 
 ### Hooks
