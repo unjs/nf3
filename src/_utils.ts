@@ -1,6 +1,5 @@
 import { createRequire } from "node:module";
-import { isAbsolute } from "node:path";
-import { join } from "node:path/posix";
+import { isAbsolute, join } from "pathe";
 
 import type { PackageJson } from "pkg-types";
 
