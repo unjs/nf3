@@ -30,7 +30,6 @@ export default defineBuildConfig({
                 // prettier-ignore
                 const ignorePkgs = [
                   "agent-base", "chownr", "debug", "has-flag", "https-proxy-agent",
-                  "@isaacs/balanced-match", "@isaacs/fs-minipass", "@isaacs/brace-expansion",
                   "minizlib", "ms", "node-fetch", "supports-color", "tar", "tr46",
                   "webidl-conversions", "whatwg-url", "yallist" , "rollup"
                 ];
