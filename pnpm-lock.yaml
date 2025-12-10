@@ -38,9 +38,6 @@ importers:
       exsolve:
         specifier: ^1.0.8
         version: 1.0.8
-      mlly:
-        specifier: ^1.8.0
-        version: 1.8.0
       obuild:
         specifier: ^0.4.7
         version: 0.4.7(magicast@0.5.1)(typescript@5.9.3)
