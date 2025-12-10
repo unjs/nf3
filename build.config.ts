@@ -1,7 +1,7 @@
 import { defineBuildConfig } from "obuild/config";
 import { rollupNodeFileTrace } from "./src/plugin.ts";
 import { fileURLToPath } from "node:url";
-import { minify } from "oxc-minify";
+import { minifySync } from "oxc-minify";
 import { parseNodeModulePath } from "mlly";
 
 import type { Plugin } from "rollup";
@@ -24,7 +24,7 @@ export default defineBuildConfig({
           transform: [
             {
               filter: (id) => /\.[mc]?js$/.test(id),
-              handler: (code, id) => minify(id, code, {}).code,
+              handler: (code, id) => minifySync(id, code, {}).code,
             },
           ],
           hooks: {
@@ -82,7 +82,7 @@ export default defineBuildConfig({
           name: "min-libs",
           renderChunk(code, chunk) {
             if (chunk.fileName.startsWith("_libs/")) {
-              return minify(chunk.fileName, code, {});
+              return minifySync(chunk.fileName, code, {});
             }
           },
         },
