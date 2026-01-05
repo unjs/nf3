@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.3.2
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.1...v0.3.2)
+
+### 🚀 Enhancements
+
+- Node native packages db ([44385f8](https://github.com/unjs/nf3/commit/44385f8))
+
+### 📦 Build
+
+- Directly read/write package.json ([e71ec96](https://github.com/unjs/nf3/commit/e71ec96))
+
+### 🏡 Chore
+
+- Update deps ([9e5b1c0](https://github.com/unjs/nf3/commit/9e5b1c0))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.0
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.2.0...v0.3.0)
