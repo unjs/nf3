@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.3
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.2...v0.3.3)
+
+### 📦 Build
+
+- Export lighter `/db` subpath ([f18b52b](https://github.com/unjs/nf3/commit/f18b52b))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.2
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.1...v0.3.2)
