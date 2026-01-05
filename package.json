@@ -8,6 +8,7 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.mjs",
+    "./db": "./dist/db.mjs",
     "./plugin": "./dist/plugin.mjs"
   },
   "types": "./dist/index.d.mts",

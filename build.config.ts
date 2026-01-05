@@ -9,7 +9,7 @@ export default defineBuildConfig({
   entries: [
     {
       type: "bundle",
-      input: ["src/index.ts", "src/plugin.ts"],
+      input: ["src/index.ts", "src/plugin.ts", "src/db.ts"],
     },
   ],
   hooks: {
