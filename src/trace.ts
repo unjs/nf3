@@ -91,14 +91,14 @@ export async function traceNodeModules(
     // Use `node_modules/{name}` in path as name to support aliases
     const pkgName = tracedFile.pkgName;
     let tracedPackage = tracedPackages[pkgName];
-    let pkgJSON = pkgCache.get(tracedFile.pkgPath);
+    let pkgJSON = pkgCache.get(tracedFile.pkgPath) as PackageJson;
     if (!pkgJSON) {
       pkgJSON = await readJSON(join(tracedFile.pkgPath, "package.json")).catch(
         () => {
           return { name: pkgName, version: "0.0.0" };
         },
       );
-      pkgCache.set(tracedFile.pkgPath, pkgJSON!);
+      pkgCache.set(tracedFile.pkgPath, pkgJSON);
     }
 
     if (!tracedPackage) {
