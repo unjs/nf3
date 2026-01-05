@@ -90,6 +90,16 @@ rollupNodeFileTrace({
 });
 ```
 
+## Native packages DB
+
+nf3 exports a list of known packages that include native code and require platform-specific builds.
+
+These packages cannot be bundled and should be traced as external dependencies most of the time and often need tracing.
+
+```js
+import { nodeNativePackages } from "nf3";
+```
+
 ## Development
 
 <details>
