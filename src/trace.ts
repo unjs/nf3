@@ -1,9 +1,13 @@
 import { promises as fsp } from "node:fs";
 import { nodeFileTrace } from "@vercel/nft";
 import { dirname, join, normalize, relative, resolve } from "pathe";
-import { readPackageJSON, writePackageJSON } from "pkg-types";
 import semver from "semver";
-import { isWindows, parseNodeModulePath } from "./_utils.ts";
+import {
+  isWindows,
+  parseNodeModulePath,
+  readJSON,
+  writeJSON,
+} from "./_utils.ts";
 
 import type { PackageJson } from "pkg-types";
 import type {
@@ -82,20 +86,21 @@ export async function traceNodeModules(
 
   // Resolve traced packages
   const tracedPackages: Record<string, TracedPackage> = {};
+  const pkgCache: Map<string, PackageJson> = new Map();
   for (const tracedFile of Object.values(tracedFiles)) {
     // Use `node_modules/{name}` in path as name to support aliases
     const pkgName = tracedFile.pkgName;
     let tracedPackage = tracedPackages[pkgName];
-
-    // Read package.json for file
-    let pkgJSON = await readPackageJSON(tracedFile.pkgPath, {
-      cache: true,
-    }).catch(
-      () => {}, // TODO: Only catch ENOENT
-    );
+    let pkgJSON = pkgCache.get(tracedFile.pkgPath);
     if (!pkgJSON) {
-      pkgJSON = <PackageJson>{ name: pkgName, version: "0.0.0" };
+      pkgJSON = await readJSON(join(tracedFile.pkgPath, "package.json")).catch(
+        () => {
+          return { name: pkgName, version: "0.0.0" };
+        },
+      );
+      pkgCache.set(tracedFile.pkgPath, pkgJSON!);
     }
+
     if (!tracedPackage) {
       tracedPackage = {
         name: pkgName,
@@ -283,7 +288,7 @@ export async function traceNodeModules(
 
   // Write an informative package.json
   if (opts.writePackageJson) {
-    await writePackageJSON(resolve(outDir, "../package.json"), {
+    await writeJSON(resolve(outDir, "../package.json"), {
       name: "traced-node-modules",
       version: "1.0.0",
       type: "module",

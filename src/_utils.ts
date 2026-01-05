@@ -1,3 +1,4 @@
+import { readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { isAbsolute, join } from "pathe";
 
@@ -99,6 +100,14 @@ function flattenExports(
 
 export function escapeRegExp(string: string): string {
   return string.replace(/[-\\^$*+?.()|[\]{}]/g, String.raw`\$&`);
+}
+
+export async function readJSON(path: string): Promise<any> {
+  return JSON.parse(await readFile(path, "utf8"));
+}
+
+export async function writeJSON(path: string, data: any): Promise<void> {
+  return await writeFile(path, JSON.stringify(data, null, 2), "utf8");
 }
 
 export function pathRegExp(string: string): string {
