@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.4
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.3...v0.3.4)
+
+### 🏡 Chore
+
+- Update deps ([a2f15bf](https://github.com/unjs/nf3/commit/a2f15bf))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.3
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.2...v0.3.3)
