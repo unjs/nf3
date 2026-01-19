@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.3.5
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.4...v0.3.5)
+
+### 📦 Build
+
+- Exclude tracing `typescript` ([65e84ff](https://github.com/unjs/nf3/commit/65e84ff))
+
+### 🏡 Chore
+
+- Update deps ([48cedc5](https://github.com/unjs/nf3/commit/48cedc5))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.4
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.3...v0.3.4)
