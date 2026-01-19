@@ -23,30 +23,31 @@
     "prepack": "pnpm build",
     "release": "pnpm test && pnpm build && changelogen --release && npm publish && git push --follow-tags",
     "test": "pnpm lint && pnpm test:types && vitest run --coverage",
-    "test:types": "tsc --noEmit --skipLibCheck"
+    "test:types": "tsgo --noEmit --skipLibCheck"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.0.9",
     "@types/semver": "^7.7.1",
+    "@typescript/native-preview": "7.0.0-dev.20260119.1",
     "@vercel/nft": "^1.2.0",
-    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/coverage-v8": "^4.0.17",
     "automd": "^0.4.2",
     "changelogen": "^0.6.2",
     "eslint": "^9.39.2",
     "eslint-config-unjs": "^0.6.2",
     "exsolve": "^1.0.8",
-    "obuild": "^0.4.14",
-    "oxc-minify": "^0.107.0",
+    "obuild": "^0.4.16",
+    "oxc-minify": "^0.110.0",
     "pathe": "^2.0.3",
     "pkg-types": "^2.3.0",
-    "prettier": "^3.7.4",
-    "rolldown": "^1.0.0-beta.59",
-    "rollup": "^4.55.1",
+    "prettier": "^3.8.0",
+    "rolldown": "^1.0.0-beta.60",
+    "rollup": "^4.55.2",
     "rollup-plugin-esbuild": "^6.2.1",
     "semver": "^7.7.3",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.17"
   },
-  "packageManager": "pnpm@10.27.0"
+  "packageManager": "pnpm@10.28.1"
 }
