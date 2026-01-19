@@ -31,7 +31,7 @@ export default defineBuildConfig({
                 const ignorePkgs = [
                   "agent-base", "chownr", "debug", "has-flag", "https-proxy-agent",
                   "minizlib", "ms", "node-fetch", "supports-color", "tar", "tr46",
-                  "webidl-conversions", "whatwg-url", "yallist" , "rollup"
+                  "webidl-conversions", "whatwg-url", "yallist" , "rollup", "typescript"
                 ];
                 for (const pkg of ignorePkgs) {
                   delete pkgs[pkg];
