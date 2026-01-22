@@ -45,3 +45,12 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
   "utf-8-validate",
   "keytar",
 ]);
+
+/**
+ * Packages that must be externalized (traced as dependencies) rather than bundled,
+ * due to bundler compatibility issues with their module format or dynamic imports.
+ */
+export const NonBundleablePackages = [
+  "pg", // CJS module incompatible with Rollup/Rolldown bundling
+  "sequelize", // Dynamic requires that cannot be statically analyzed
+];
