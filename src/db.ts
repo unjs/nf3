@@ -20,6 +20,7 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
   "sqlite3",
 
   "lz4",
+  "zlib-sync",
 
   "deasync",
   "node-gyp",
