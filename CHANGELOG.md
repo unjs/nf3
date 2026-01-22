@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.3.6
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.5...v0.3.6)
+
+### 🚀 Enhancements
+
+- **db:** Add `NonBundleablePackages` ([f28708d](https://github.com/unjs/nf3/commit/f28708d))
+
+### 💅 Refactors
+
+- Add `zlib-sync` to native db ([ecd1745](https://github.com/unjs/nf3/commit/ecd1745))
+
+### 🏡 Chore
+
+- Update deps ([77b38db](https://github.com/unjs/nf3/commit/77b38db))
+- Update deps ([72809bc](https://github.com/unjs/nf3/commit/72809bc))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.5
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.4...v0.3.5)
