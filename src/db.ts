@@ -53,5 +53,5 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
 export const NonBundleablePackages = [
   "pg", // CJS module incompatible with Rollup/Rolldown bundling
   "sequelize", // Dynamic requires that cannot be statically analyzed
-  "@discordjs/ws" // Optional dependency breaks build
+  "@discordjs/ws", // Optional dependency breaks build
 ];
