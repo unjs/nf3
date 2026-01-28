@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.3.7
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.6...v0.3.7)
+
+### 🩹 Fixes
+
+- Add `@discordjs/ws` to `NonBundleablePackages` ([#17](https://github.com/unjs/nf3/pull/17))
+- Add @prisma/client to NonBundleablePackages ([#18](https://github.com/unjs/nf3/pull/18))
+
+### 🏡 Chore
+
+- Update deps ([32d2ac1](https://github.com/unjs/nf3/commit/32d2ac1))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+- Katja Lutz <apps@katjalutz.ch>
+- Rihan Arfan ([@RihanArfan](https://github.com/RihanArfan))
+
 ## v0.3.6
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.5...v0.3.6)
