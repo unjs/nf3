@@ -2,27 +2,15 @@ import { promises as fsp } from "node:fs";
 import { nodeFileTrace } from "@vercel/nft";
 import { dirname, join, normalize, relative, resolve } from "pathe";
 import semver from "semver";
-import {
-  isWindows,
-  parseNodeModulePath,
-  readJSON,
-  writeJSON,
-} from "./_utils.ts";
+import { isWindows, parseNodeModulePath, readJSON, writeJSON } from "./_utils.ts";
 
 import type { PackageJson } from "pkg-types";
-import type {
-  ExternalsTraceOptions,
-  TracedFile,
-  TracedPackage,
-} from "./types.ts";
+import type { ExternalsTraceOptions, TracedFile, TracedPackage } from "./types.ts";
 export type { ExternalsTraceOptions } from "./types.ts";
 
 export const DEFAULT_CONDITIONS = ["node", "import", "default"];
 
-export async function traceNodeModules(
-  input: string[],
-  opts: ExternalsTraceOptions,
-) {
+export async function traceNodeModules(input: string[], opts: ExternalsTraceOptions) {
   const rootDir = resolve(opts.rootDir || ".");
 
   await opts?.hooks?.traceStart?.(input);
@@ -58,18 +46,12 @@ export async function traceNodeModules(
         if (!(await isFile(path))) {
           return;
         }
-        const {
-          dir: baseDir,
-          name: pkgName,
-          subpath,
-        } = parseNodeModulePath(path);
+        const { dir: baseDir, name: pkgName, subpath } = parseNodeModulePath(path);
         if (!baseDir || !pkgName) {
           return;
         }
         const pkgPath = join(baseDir, pkgName);
-        const parents = await Promise.all(
-          [...reasons.parents].map((p) => _resolveTracedPath(p)),
-        );
+        const parents = await Promise.all([...reasons.parents].map((p) => _resolveTracedPath(p)));
         const tracedFile = <TracedFile>{
           path,
           parents,
@@ -93,11 +75,9 @@ export async function traceNodeModules(
     let tracedPackage = tracedPackages[pkgName];
     let pkgJSON = pkgCache.get(tracedFile.pkgPath) as PackageJson;
     if (!pkgJSON) {
-      pkgJSON = await readJSON(join(tracedFile.pkgPath, "package.json")).catch(
-        () => {
-          return { name: pkgName, version: "0.0.0" };
-        },
-      );
+      pkgJSON = await readJSON(join(tracedFile.pkgPath, "package.json")).catch(() => {
+        return { name: pkgName, version: "0.0.0" };
+      });
       pkgCache.set(tracedFile.pkgPath, pkgJSON);
     }
 
@@ -108,8 +88,7 @@ export async function traceNodeModules(
       };
       tracedPackages[pkgName] = tracedPackage;
     }
-    let tracedPackageVersion =
-      tracedPackage.versions[pkgJSON.version || "0.0.0"];
+    let tracedPackageVersion = tracedPackage.versions[pkgJSON.version || "0.0.0"];
     if (!tracedPackageVersion) {
       tracedPackageVersion = {
         path: tracedFile.pkgPath,
@@ -131,11 +110,7 @@ export async function traceNodeModules(
 
   const outDir = resolve(rootDir, opts.outDir || "dist", "node_modules");
 
-  const writePackage = async (
-    name: string,
-    version: string,
-    _pkgPath?: string,
-  ) => {
+  const writePackage = async (name: string, version: string, _pkgPath?: string) => {
     // Find pkg
     const pkg = tracedPackages[name]!;
     const pkgPath = _pkgPath || pkg.name;
@@ -149,9 +124,7 @@ export async function traceNodeModules(
       const dst = resolve(outDir, pkgPath, subpath);
       await fsp.mkdir(dirname(dst), { recursive: true });
 
-      const transformers = (opts.transform || []).filter(
-        (t) => t?.filter?.(src) && t.handler,
-      );
+      const transformers = (opts.transform || []).filter((t) => t?.filter?.(src) && t.handler);
       if (transformers.length > 0) {
         let content = await fsp.readFile(src, "utf8");
         for (const transformer of transformers) {
@@ -234,10 +207,7 @@ export async function traceNodeModules(
     }
     multiVersionPkgs[tracedPackage.name] = {};
     for (const version of versions) {
-      multiVersionPkgs[tracedPackage.name]![version] = findPackageParents(
-        tracedPackage,
-        version,
-      );
+      multiVersionPkgs[tracedPackage.name]![version] = findPackageParents(tracedPackage, version);
     }
   }
 
@@ -252,19 +222,17 @@ export async function traceNodeModules(
 
   // Write packages with multiple versions
   for (const [pkgName, pkgVersions] of Object.entries(multiVersionPkgs)) {
-    const versionEntries = Object.entries(pkgVersions).sort(
-      ([v1, p1], [v2, p2]) => {
-        // 1. Package with no parent packages to be hoisted
-        if (p1.length === 0) {
-          return -1;
-        }
-        if (p2.length === 0) {
-          return 1;
-        }
-        // 2. Newest version to be hoisted
-        return compareVersions(v1, v2);
-      },
-    );
+    const versionEntries = Object.entries(pkgVersions).sort(([v1, p1], [v2, p2]) => {
+      // 1. Package with no parent packages to be hoisted
+      if (p1.length === 0) {
+        return -1;
+      }
+      if (p2.length === 0) {
+        return 1;
+      }
+      // 2. Newest version to be hoisted
+      return compareVersions(v1, v2);
+    });
     for (const [version, parentPkgs] of versionEntries) {
       // Write each version into node_modules/.nf3/{name}@{version}
       await writePackage(pkgName, version, `.nf3/${pkgName}@${version}`);
@@ -274,14 +242,8 @@ export async function traceNodeModules(
       for (const parentPkg of parentPkgs) {
         const parentPkgName = parentPkg.replace(/@[^@]+$/, "");
         await (multiVersionPkgs[parentPkgName]
-          ? linkPackage(
-              `.nf3/${pkgName}@${version}`,
-              `.nf3/${parentPkg}/node_modules/${pkgName}`,
-            )
-          : linkPackage(
-              `.nf3/${pkgName}@${version}`,
-              `${parentPkgName}/node_modules/${pkgName}`,
-            ));
+          ? linkPackage(`.nf3/${pkgName}@${version}`, `.nf3/${parentPkg}/node_modules/${pkgName}`)
+          : linkPackage(`.nf3/${pkgName}@${version}`, `${parentPkgName}/node_modules/${pkgName}`));
       }
     }
   }
@@ -295,10 +257,7 @@ export async function traceNodeModules(
       private: true,
       dependencies: Object.fromEntries(
         [
-          ...Object.values(tracedPackages).map((pkg) => [
-            pkg.name,
-            Object.keys(pkg.versions)[0],
-          ]),
+          ...Object.values(tracedPackages).map((pkg) => [pkg.name, Object.keys(pkg.versions)[0]]),
           ...Object.entries(usedAliases),
         ].sort(([a], [b]) => a!.localeCompare(b!)),
       ),
@@ -315,11 +274,7 @@ function compareVersions(v1 = "0.0.0", v2 = "0.0.0") {
 }
 
 export function applyProductionCondition(exports: PackageJson["exports"]) {
-  if (
-    !exports ||
-    typeof exports === "string" ||
-    Array.isArray(exports) /* TODO: unhandled */
-  ) {
+  if (!exports || typeof exports === "string" || Array.isArray(exports) /* TODO: unhandled */) {
     return;
   }
   if ("production" in exports) {

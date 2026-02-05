@@ -44,9 +44,7 @@ export default defineBuildConfig({
                 for (const pkgGroup of Object.values(pkgs)) {
                   for (const pkg of Object.values(pkgGroup.versions)) {
                     pkg.pkgJSON = Object.fromEntries(
-                      Object.entries(pkg.pkgJSON).filter(([key]) =>
-                        essentialFields.has(key),
-                      ),
+                      Object.entries(pkg.pkgJSON).filter(([key]) => essentialFields.has(key)),
                     );
                   }
                 }

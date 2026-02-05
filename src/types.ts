@@ -87,10 +87,7 @@ export interface ExternalsTraceOptions {
 
 export type Transformer = {
   filter: (id: string) => boolean;
-  handler: (
-    code: string,
-    id: string,
-  ) => string | undefined | Promise<string | undefined>;
+  handler: (code: string, id: string) => string | undefined | Promise<string | undefined>;
 };
 
 export type TracedFile = {
@@ -118,7 +115,5 @@ export interface TraceHooks {
   traceStart?: (files: string[]) => void | Promise<void>;
   traceResult?: (result: NodeFileTraceResult) => void | Promise<void>;
   tracedFiles?: (files: Record<string, TracedFile>) => void | Promise<void>;
-  tracedPackages?: (
-    packages: Record<string, TracedPackage>,
-  ) => void | Promise<void>;
+  tracedPackages?: (packages: Record<string, TracedPackage>) => void | Promise<void>;
 }

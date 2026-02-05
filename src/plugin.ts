@@ -95,10 +95,7 @@ export function externals(opts: ExternalsPluginOptions): Plugin {
             return resolved;
           }
           if (!tryResolve(importId, importer)) {
-            const guessed = await guessSubpath(
-              resolvedPath,
-              opts.conditions || DEFAULT_CONDITIONS,
-            );
+            const guessed = await guessSubpath(resolvedPath, opts.conditions || DEFAULT_CONDITIONS);
             if (!guessed) {
               return resolved;
             }
