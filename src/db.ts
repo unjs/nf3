@@ -55,4 +55,5 @@ export const NonBundleablePackages = [
   "sequelize", // Dynamic requires that cannot be statically analyzed
   "@discordjs/ws", // Optional dependency breaks build
   "@prisma/client", // CJS module using __dirname incompatible with Rollup/Rolldown bundling
+  "@sentry/tanstackstart-react", // vite export from SDK breaks build
 ];
