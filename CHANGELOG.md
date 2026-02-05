@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.3.8
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.7...v0.3.8)
+
+### 🚀 Enhancements
+
+- **db:** Add sentry sdk to NonBundleablePackages ([#21](https://github.com/unjs/nf3/pull/21))
+
+### 🏡 Chore
+
+- Update deps ([22e141a](https://github.com/unjs/nf3/commit/22e141a))
+- Add pnpm config ([f97c813](https://github.com/unjs/nf3/commit/f97c813))
+- Apply automated updates ([f02de7e](https://github.com/unjs/nf3/commit/f02de7e))
+- Migrate to oxfmt and oxlint ([7d4ca5a](https://github.com/unjs/nf3/commit/7d4ca5a))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+- Andrei ([@andreiborza](https://github.com/andreiborza))
+
 ## v0.3.7
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.6...v0.3.7)
