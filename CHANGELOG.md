@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.3.10
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.9...v0.3.10)
+
+### 🩹 Fixes
+
+- **db:** Remove extra items ([704c5fd](https://github.com/unjs/nf3/commit/704c5fd))
+
+### 🏡 Chore
+
+- Ref to `THIRD-PARTY-LICENSES` ([d9485d8](https://github.com/unjs/nf3/commit/d9485d8))
+- Update deps ([86589d8](https://github.com/unjs/nf3/commit/86589d8))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.9
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.8...v0.3.9)
