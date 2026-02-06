@@ -123,7 +123,6 @@ export const NonBundleablePackages = [
   "pg-native", // Dynamic native binary loading companion to pg
   "mysql2", // CJS with optional native bindings loading
   "oracledb", // Dynamic native binary loading
-  "tedious", // TDS protocol driver with CJS dynamic patterns
   "sequelize", // Dynamic requires that cannot be statically analyzed
   "knex", // Dynamic require() for dialect drivers
   "typeorm", // Dynamic entity/driver loading via require()
@@ -147,13 +146,9 @@ export const NonBundleablePackages = [
   // Cloud SDKs
   "aws-sdk", // Massive dynamic require() tree for service clients
   "firebase-admin", // gRPC + dynamic requires for service modules
-  "@google-cloud/storage", // CJS + transitive dynamic loading in auth/gaxios stack
-  "@azure/storage-blob", // CJS package often safer externalized in server bundles
 
   // Auth / Crypto
   "passport", // Dynamic strategy loading via require()
-  "jsonwebtoken", // CJS with optional native crypto bindings
-  "bcryptjs", // Pure JS but often paired with native bcrypt; CJS interop issues
 
   // Templating / Rendering
   "ejs", // Dynamic include/require patterns
@@ -183,9 +178,7 @@ export const NonBundleablePackages = [
   "socket.io", // Engine.IO parser/transports and CJS runtime indirection
   "puppeteer", // Downloads Chromium binary; __dirname-based resolution
   "playwright", // Downloads browser binaries; dynamic binary resolution
-  "sharp", // Also non-bundleable due to platform-specific binary loading
   "undici", // Node built-in fetch backend; CJS with WASM loading
-  "express", // Deeply CJS; safer externalized in serverless bundles
   "fastify", // Plugin loading system with dynamic requires
   "nest", // NestJS dynamic module/provider loading
   "@nestjs/core", // Dynamic module/provider loading via reflect-metadata
