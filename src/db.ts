@@ -119,71 +119,21 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
  */
 export const NonBundleablePackages = [
   // Database drivers / ORMs
-  "pg", // CJS module incompatible with Rollup/Rolldown bundling
   "pg-native", // Dynamic native binary loading companion to pg
-  "mysql2", // CJS with optional native bindings loading
-  "oracledb", // Dynamic native binary loading
-  "sequelize", // Dynamic requires that cannot be statically analyzed
-  "knex", // Dynamic require() for dialect drivers
   "typeorm", // Dynamic entity/driver loading via require()
-  "@mikro-orm/core", // Dynamic entity discovery and driver loading
-  "mongoose", // Dynamic plugin loading patterns
   "prisma", // CLI with engine binaries and __dirname usage
   "@prisma/client", // CJS module using __dirname incompatible with Rollup/Rolldown bundling
-  "mongodb", // Optional/native compressors and runtime driver resolution
-  "redis", // Node-redis package exports and dynamic command table loading
 
   // APM / Observability
-  "@sentry/node", // Sentry SDK should not be bundled
-  "@sentry/node-core", // Sentry SDK should not be bundled
-  "@sentry/nuxt", // Sentry SDK should not be bundled
   "@sentry/tanstackstart-react", // Vite export from SDK breaks build
   "dd-trace", // Datadog APM; require hooks and monkey-patching
   "newrelic", // New Relic agent; monkey-patches core modules via dynamic requires
   "applicationinsights", // Azure APM; monkey-patching and dynamic requires
-  "@opentelemetry/instrumentation", // Dynamic require() hooks for auto-instrumentation
-
-  // Cloud SDKs
-  "aws-sdk", // Massive dynamic require() tree for service clients
-  "firebase-admin", // gRPC + dynamic requires for service modules
-
-  // Auth / Crypto
-  "passport", // Dynamic strategy loading via require()
-
-  // Templating / Rendering
-  "ejs", // Dynamic include/require patterns
-  "pug", // Dynamic filter/plugin loading
-  "handlebars", // Dynamic helper/partial registration
-
-  // Email
-  "nodemailer", // Dynamic transport loading and CJS patterns
-
-  // GraphQL
-  "graphql", // Must be a singleton; bundling causes duplicate schema issues
-  "apollo-server-express", // Dynamic plugin/transport loading
 
   // Serverless / Runtime
-  "@netlify/functions", // Runtime context injection; should stay external
   "@vercel/node", // Runtime helpers that expect external resolution
 
-  // Logging / Queues
-  "bunyan", // Stream-based transports with dynamic loading
-  "bull", // Redis-backed queue with dynamic requires
-  "bullmq", // Modern Bull queue; Lua scripts and worker file paths
-
   // Other
-  "@discordjs/ws", // Optional dependency breaks build
-  "pino", // Worker thread transports reference file paths at runtime
-  "winston", // Transport loading patterns and CJS interop edge-cases
-  "socket.io", // Engine.IO parser/transports and CJS runtime indirection
   "puppeteer", // Downloads Chromium binary; __dirname-based resolution
   "playwright", // Downloads browser binaries; dynamic binary resolution
-  "undici", // Node built-in fetch backend; CJS with WASM loading
-  "fastify", // Plugin loading system with dynamic requires
-  "nest", // NestJS dynamic module/provider loading
-  "@nestjs/core", // Dynamic module/provider loading via reflect-metadata
-  "@nestjs/common", // Companion to @nestjs/core
-  "mikro-orm", // Alias for @mikro-orm packages
-  "nock", // HTTP interception via monkey-patching
-  "msw", // Mock Service Worker; interceptor patterns
 ];
