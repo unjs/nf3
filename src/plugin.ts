@@ -121,7 +121,7 @@ export function externals(opts: ExternalsPluginOptions): Plugin {
         };
       },
     },
-    buildEnd: {
+    writeBundle: {
       order: "post",
       async handler() {
         if (opts.trace === false || tracedPaths.size === 0) {
