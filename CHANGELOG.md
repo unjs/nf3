@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.3.11
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.10...v0.3.11)
+
+### 🩹 Fixes
+
+- **plugin:** Use `writeBundle` hook to avoid vite `emptyOutDir` race ([#26](https://github.com/unjs/nf3/pull/26))
+- **db:** Only keep tested packages in `NonBundleablePackages` ([#23](https://github.com/unjs/nf3/pull/23))
+
+### 🏡 Chore
+
+- Update deps ([5f982a9](https://github.com/unjs/nf3/commit/5f982a9))
+- Update deps ([b4ea594](https://github.com/unjs/nf3/commit/b4ea594))
+- Update test ([4b3fc22](https://github.com/unjs/nf3/commit/4b3fc22))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+- Kricsleo ([@kricsleo](https://github.com/kricsleo))
+
 ## v0.3.10
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.9...v0.3.10)
