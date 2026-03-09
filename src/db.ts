@@ -136,4 +136,5 @@ export const NonBundleablePackages = [
   // Other
   "puppeteer", // Downloads Chromium binary; __dirname-based resolution
   "playwright", // Downloads browser binaries; dynamic binary resolution
+  "tslib", // Often problematic when bundled
 ];
