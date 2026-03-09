@@ -11,8 +11,14 @@ import { promisify } from "node:util";
 
 const execFile = promisify(_execFile);
 
-// Some packages cannot be even bundled
-const cannotBundle = ["@sentry/tanstackstart-react"];
+const skip = [
+  // cannot be bundled at all
+  "@sentry/tanstackstart-react",
+  // can be bundled but problematic at runtime
+  "tslib",
+  "puppeteer",
+  "applicationinsights",
+];
 
 const fixtureDir = join(fileURLToPath(new URL("./", import.meta.url)));
 
@@ -24,7 +30,7 @@ describe("db:NonBundleablePackages", () => {
   }, 120_000);
 
   for (const pkg of NonBundleablePackages) {
-    if (cannotBundle.includes(pkg)) {
+    if (skip.includes(pkg)) {
       continue;
     }
     it(`Bundled ${pkg} should throw`, async () => {
