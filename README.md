@@ -48,11 +48,30 @@ export default {
       // include: [/^@my-scope\//],
       // exclude: ["fsevents"],
       // traceInclude: ["some-lib"],
-      // trace: {}
+      // trace: {
+      //   fullTraceInclude: ["some-lib"],
+      // }
     }),
   ],
 };
 ```
+
+### Full Trace Include
+
+By default, only files detected by [`@vercel/nft`](https://github.com/vercel/nft) are included in the output. Some packages may require all their files to be present at runtime (e.g., packages with dynamic requires or asset files).
+
+Use `fullTraceInclude` to specify package names that should have **all** files copied to the output:
+
+```js
+rollupNodeFileTrace({
+  trace: {
+    fullTraceInclude: ["some-package", "@scope/another-package"],
+  },
+});
+```
+
+> [!NOTE]
+> Requires Node.js >= 22.0.0 (`fs.promises.glob`).
 
 ### Hooks
 
