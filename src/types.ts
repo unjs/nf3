@@ -79,9 +79,19 @@ export interface ExternalsTraceOptions {
   /**
    * List of package names to include all files for in the trace (not just nft-detected ones).
    *
+   * Each item can be a package name string or a tuple of `[packageName, { glob }]` to customize the glob pattern.
+   *
    * Requires Node.js >= 22.0.0 (`fs.promises.glob`).
+   *
+   * @example
+   * ```ts
+   * fullTraceInclude: [
+   *   "some-pkg",
+   *   ["other-pkg", { glob: "dist/**" }],
+   * ]
+   * ```
    */
-  fullTraceInclude?: string[];
+  fullTraceInclude?: (string | [name: string, options: { glob?: string }])[];
 
   /**
    * Hook functions for allow extending tracing behavior.

@@ -97,11 +97,13 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
       };
       tracedPackage.versions[pkgJSON.version || "0.0.0"] = tracedPackageVersion;
 
-      if (opts.fullTraceInclude?.includes(pkgName)) {
+      const fullTraceEntry = resolveFullTraceEntry(opts.fullTraceInclude, pkgName);
+      if (fullTraceEntry) {
         if (!fsp.glob) {
           throw new Error("`fullTraceInclude` requires Node.js >= 22.0.0 (fs.promises.glob)");
         }
-        for await (const file of fsp.glob("{**,.**}/{.*,*}", {
+        const globPattern = fullTraceEntry.glob || "{**,.**}/{.*,*}";
+        for await (const file of fsp.glob(globPattern, {
           cwd: tracedFile.pkgPath,
           exclude: (name) => name === "node_modules",
         })) {
@@ -302,6 +304,25 @@ export function applyProductionCondition(exports: PackageJson["exports"]) {
   for (const key in exports) {
     applyProductionCondition(exports[key as keyof typeof exports]);
   }
+}
+
+function resolveFullTraceEntry(
+  entries: ExternalsTraceOptions["fullTraceInclude"],
+  pkgName: string,
+): { glob?: string } | undefined {
+  if (!entries) {
+    return undefined;
+  }
+  for (const entry of entries) {
+    if (typeof entry === "string") {
+      if (entry === pkgName) {
+        return {};
+      }
+    } else if (entry[0] === pkgName) {
+      return entry[1];
+    }
+  }
+  return undefined;
 }
 
 async function isFile(file: string) {

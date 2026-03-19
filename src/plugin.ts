@@ -136,7 +136,8 @@ export function externals(opts: ExternalsPluginOptions): Plugin {
         // Pre-resolve fullTraceInclude package names to traced paths
         if (traceOpts?.fullTraceInclude) {
           for (const pkg of traceOpts.fullTraceInclude) {
-            const resolved = tryResolve(pkg, undefined);
+            const pkgName = Array.isArray(pkg) ? pkg[0] : pkg;
+            const resolved = tryResolve(pkgName, undefined);
             if (resolved) {
               tracedPaths.add(resolved);
             }
