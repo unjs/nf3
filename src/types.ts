@@ -77,9 +77,11 @@ export interface ExternalsTraceOptions {
   writePackageJson?: boolean;
 
   /**
-   * If `true`, includes all files in the package in the trace.
+   * List of package names to include all files for in the trace (not just nft-detected ones).
+   *
+   * Requires Node.js >= 22.0.0 (`fs.promises.glob`).
    */
-  fullTraceInclude?: boolean;
+  fullTraceInclude?: string[];
 
   /**
    * Hook functions for allow extending tracing behavior.

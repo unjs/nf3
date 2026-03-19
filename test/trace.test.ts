@@ -43,7 +43,7 @@ describe("traceNodeModules", () => {
     const outDir = fileURLToPath(new URL("dist/trace", import.meta.url));
 
     await cp(input, `${outDir}/index.mjs`);
-    await traceNodeModules([input], { outDir, fullTraceInclude: true });
+    await traceNodeModules([input], { outDir, fullTraceInclude: ["@fixture/nitro-utils"] });
 
     expect(
       await readFile(path.join(outDir, "node_modules", "@fixture", "nitro-utils", "README.md"), {

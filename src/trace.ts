@@ -97,7 +97,7 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
       };
       tracedPackage.versions[pkgJSON.version || "0.0.0"] = tracedPackageVersion;
 
-      if (opts.fullTraceInclude) {
+      if (opts.fullTraceInclude?.includes(pkgName)) {
         if (!fsp.glob) {
           throw new Error("`fullTraceInclude` requires Node.js >= 22.0.0 (fs.promises.glob)");
         }

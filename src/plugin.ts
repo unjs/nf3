@@ -132,11 +132,21 @@ export function externals(opts: ExternalsPluginOptions): Plugin {
         if (opts.trace === false || tracedPaths.size === 0) {
           return;
         }
+        const traceOpts = opts.trace === true ? {} : opts.trace;
+        // Pre-resolve fullTraceInclude package names to traced paths
+        if (traceOpts?.fullTraceInclude) {
+          for (const pkg of traceOpts.fullTraceInclude) {
+            const resolved = tryResolve(pkg, undefined);
+            if (resolved) {
+              tracedPaths.add(resolved);
+            }
+          }
+        }
         const { traceNodeModules } = await import("./trace.ts");
         await traceNodeModules([...tracedPaths], {
           conditions: opts.conditions,
           rootDir,
-          ...(opts.trace === true ? {} : opts.trace),
+          ...traceOpts,
         });
       },
     },
