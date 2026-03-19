@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.3.12
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.11...v0.3.12)
+
+### 🚀 Enhancements
+
+- Add `fullTraceInclude` option ([#4](https://github.com/unjs/nf3/pull/4))
+
+### 🩹 Fixes
+
+- **plugin:** Use `traceInclude` ([#27](https://github.com/unjs/nf3/pull/27))
+
+### 🏡 Chore
+
+- Update deps ([7763d5a](https://github.com/unjs/nf3/commit/7763d5a))
+- Apply automated updates ([9bcf4ae](https://github.com/unjs/nf3/commit/9bcf4ae))
+
+### ❤️ Contributors
+
+- Andrew Lisowski ([@hipstersmoothie](https://github.com/hipstersmoothie))
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+- Peterhirn <peter+github@lope.at>
+
 ## v0.3.11
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.10...v0.3.11)
