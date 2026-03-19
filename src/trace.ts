@@ -103,10 +103,7 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
           cwd: tracedFile.pkgPath,
           ignore: ["node_modules/**"],
         });
-
-        for (const file of allFiles) {
-          tracedPackageVersion.files.push(file);
-        }
+        tracedPackageVersion.files.push(...allFiles.map((file) => join(tracedFile.pkgPath, file)));
       }
     }
     tracedPackageVersion.files.push(tracedFile.path);
@@ -187,9 +184,9 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
   // Utility to find package parents
   const findPackageParents = (pkg: TracedPackage, version: string) => {
     // Try to find parent packages
-    const versionFiles = pkg.versions[version]!.files.map(
-      (path) => tracedFiles[path],
-    ).filter((x): x is TracedFile => x !== undefined);
+    const versionFiles = pkg.versions[version]!.files.map((path) => tracedFiles[path]).filter(
+      (x): x is TracedFile => x !== undefined,
+    );
     const parentPkgs = [
       ...new Set(
         versionFiles.flatMap((file) =>

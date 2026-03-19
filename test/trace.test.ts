@@ -38,7 +38,7 @@ describe("traceNodeModules", () => {
     expect(hooks.tracedPackages).toHaveBeenCalledOnce();
   });
 
-  it.only("traceNodeModules with fullTraceInclude", async () => {
+  it("traceNodeModules with fullTraceInclude", async () => {
     const input = fileURLToPath(new URL("fixture/index.mjs", import.meta.url));
     const outDir = fileURLToPath(new URL("dist/trace", import.meta.url));
 
@@ -46,16 +46,9 @@ describe("traceNodeModules", () => {
     await traceNodeModules([input], { outDir, fullTraceInclude: true });
 
     expect(
-      await readFile(
-        path.join(
-          outDir,
-          "node_modules",
-          "@fixture",
-          "nitro-utils",
-          "README.md",
-        ),
-        { encoding: "utf8" },
-      ),
-    ).toMatch("# TEST");
+      await readFile(path.join(outDir, "node_modules", "@fixture", "nitro-utils", "README.md"), {
+        encoding: "utf8",
+      }),
+    ).toMatch("# Title");
   });
 });
