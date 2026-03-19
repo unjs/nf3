@@ -126,9 +126,7 @@ export function externals(opts: ExternalsPluginOptions): Plugin {
       async handler() {
         for (const entry of opts.traceInclude || []) {
           tracedPaths.add(
-            isAbsolute(entry)
-              ? entry
-              : tryResolve(entry, undefined) ?? resolve(rootDir, entry)
+            isAbsolute(entry) ? entry : (tryResolve(entry, undefined) ?? resolve(rootDir, entry)),
           );
         }
         if (opts.trace === false || tracedPaths.size === 0) {
