@@ -25,9 +25,6 @@
     "test": "pnpm lint && pnpm test:types && vitest run --coverage",
     "test:types": "tsgo --noEmit --skipLibCheck"
   },
-  "dependencies": {
-    "tinyglobby": "^0.2.15"
-  },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@types/node": "^25.5.0",

@@ -1,8 +1,7 @@
-import { promises as fsp } from "node:fs";
+import * as fsp from "node:fs/promises";
 import { nodeFileTrace } from "@vercel/nft";
 import { dirname, join, normalize, relative, resolve } from "pathe";
 import semver from "semver";
-import { glob } from "tinyglobby";
 import { isWindows, parseNodeModulePath, readJSON, writeJSON } from "./_utils.ts";
 
 import type { PackageJson } from "pkg-types";
@@ -99,11 +98,18 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
       tracedPackage.versions[pkgJSON.version || "0.0.0"] = tracedPackageVersion;
 
       if (opts.fullTraceInclude) {
-        const allFiles = await glob("**/*", {
+        if (!fsp.glob) {
+          throw new Error("`fullTraceInclude` requires Node.js >= 22.0.0 (fs.promises.glob)");
+        }
+        for await (const file of fsp.glob("**/*", {
           cwd: tracedFile.pkgPath,
-          ignore: ["node_modules/**"],
-        });
-        tracedPackageVersion.files.push(...allFiles.map((file) => join(tracedFile.pkgPath, file)));
+          exclude: (name) => name === "node_modules",
+        })) {
+          const fullPath = join(tracedFile.pkgPath, file);
+          if (await isFile(fullPath)) {
+            tracedPackageVersion.files.push(fullPath);
+          }
+        }
       }
     }
     tracedPackageVersion.files.push(tracedFile.path);

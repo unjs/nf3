@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      tinyglobby:
-        specifier: ^0.2.15
-        version: 0.2.15
     devDependencies:
       '@rollup/plugin-node-resolve':
         specifier: ^16.0.3
