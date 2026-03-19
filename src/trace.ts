@@ -101,7 +101,7 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
         if (!fsp.glob) {
           throw new Error("`fullTraceInclude` requires Node.js >= 22.0.0 (fs.promises.glob)");
         }
-        for await (const file of fsp.glob("**/*", {
+        for await (const file of fsp.glob("{**,.**}/{.*,*}", {
           cwd: tracedFile.pkgPath,
           exclude: (name) => name === "node_modules",
         })) {

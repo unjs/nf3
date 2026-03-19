@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { traceNodeModules } from "../src/index.ts";
 import { fileURLToPath } from "node:url";
-import { cp } from "node:fs/promises";
+import { cp, rm, mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { readFile } from "node:fs/promises";
 import type { TraceHooks } from "../src/types.ts";
 
 describe("traceNodeModules", () => {
@@ -42,6 +41,8 @@ describe("traceNodeModules", () => {
     const input = fileURLToPath(new URL("fixture/index.mjs", import.meta.url));
     const outDir = fileURLToPath(new URL("dist/trace", import.meta.url));
 
+    await rm(outDir, { recursive: true, force: true });
+    await mkdir(outDir, { recursive: true });
     await cp(input, `${outDir}/index.mjs`);
     await traceNodeModules([input], { outDir, fullTraceInclude: ["@fixture/nitro-utils"] });
 
