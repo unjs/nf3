@@ -26,6 +26,7 @@ describe("db:NonBundleablePackages", () => {
   beforeAll(async () => {
     await execFile("pnpm", ["add", ...NonBundleablePackages], {
       cwd: fixtureDir,
+      shell: process.platform === "win32",
     });
   }, 120_000);
 
