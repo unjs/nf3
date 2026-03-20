@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.3.13
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.12...v0.3.13)
+
+### 🩹 Fixes
+
+- **trace:** Avoid shared reference mutation in applyProductionCondition ([fb3eac2](https://github.com/unjs/nf3/commit/fb3eac2))
+- **trace:** Improve multi-version hoisting to prefer most dependants ([328dbc1](https://github.com/unjs/nf3/commit/328dbc1))
+
+### 🏡 Chore
+
+- Add agents.md ([9576a4e](https://github.com/unjs/nf3/commit/9576a4e))
+- Apply automated updates ([6ab2c2a](https://github.com/unjs/nf3/commit/6ab2c2a))
+
+### ✅ Tests
+
+- Add unit tests with mocking ([c775422](https://github.com/unjs/nf3/commit/c775422))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.12
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.11...v0.3.12)
