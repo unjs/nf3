@@ -243,12 +243,11 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
   // Write packages with multiple versions
   for (const [pkgName, pkgVersions] of Object.entries(multiVersionPkgs)) {
     const versionEntries = Object.entries(pkgVersions).sort(([v1, p1], [v2, p2]) => {
-      // 1. Package with no parent packages to be hoisted
-      if (p1.length === 0) {
-        return -1;
-      }
-      if (p2.length === 0) {
-        return 1;
+      // 1. Most dependants to be hoisted (0 parents = root-level = most implicit dependants)
+      const d1 = p1.length === 0 ? Infinity : p1.length;
+      const d2 = p2.length === 0 ? Infinity : p2.length;
+      if (d1 !== d2) {
+        return d2 - d1;
       }
       // 2. Newest version to be hoisted
       return compareVersions(v1, v2);

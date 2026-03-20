@@ -221,6 +221,58 @@ const scenarios: TraceScenario[] = [
     },
     expectSymlinks: true,
   },
+  {
+    name: "hoists multi-version package with most dependants",
+    packages: {
+      "dep-a": { version: "1.0.0", files: { "index.js": "a" } },
+      "dep-b": { version: "1.0.0", files: { "index.js": "b" } },
+      "dep-c": { version: "1.0.0", files: { "index.js": "c" } },
+      lib: { version: "1.0.0", files: { "index.js": "lib-v1" } },
+    },
+    extraFiles: {
+      // v2 is nested under dep-a, dep-b, dep-c (3 dependants)
+      "node_modules/dep-a/node_modules/lib/package.json": JSON.stringify({ name: "lib", version: "2.0.0" }),
+      "node_modules/dep-a/node_modules/lib/index.js": "lib-v2",
+      "node_modules/dep-b/node_modules/lib/package.json": JSON.stringify({ name: "lib", version: "2.0.0" }),
+      "node_modules/dep-b/node_modules/lib/index.js": "lib-v2",
+      "node_modules/dep-c/node_modules/lib/package.json": JSON.stringify({ name: "lib", version: "2.0.0" }),
+      "node_modules/dep-c/node_modules/lib/index.js": "lib-v2",
+    },
+    nftResult: {
+      [nm("dep-a", "index.js")]: {},
+      [nm("dep-b", "index.js")]: {},
+      [nm("dep-c", "index.js")]: {},
+      // v1 has 0 dependants (root-level)
+      [nm("lib", "index.js")]: {},
+      // v2 has 3 dependants
+      [join(NM, "dep-a/node_modules/lib", "index.js")]: { parents: [nm("dep-a", "index.js")] },
+      [join(NM, "dep-b/node_modules/lib", "index.js")]: { parents: [nm("dep-b", "index.js")] },
+      [join(NM, "dep-c/node_modules/lib", "index.js")]: { parents: [nm("dep-c", "index.js")] },
+    },
+    expectSymlinks: true,
+  },
+  {
+    name: "hoists newest version when dependant counts are equal",
+    packages: {
+      "dep-a": { version: "1.0.0", files: { "index.js": "a" } },
+      "dep-b": { version: "1.0.0", files: { "index.js": "b" } },
+      lib: { version: "1.0.0", files: { "index.js": "lib-v1" } },
+    },
+    extraFiles: {
+      "node_modules/dep-a/node_modules/lib/package.json": JSON.stringify({ name: "lib", version: "3.0.0" }),
+      "node_modules/dep-a/node_modules/lib/index.js": "lib-v3",
+      "node_modules/dep-b/node_modules/lib/package.json": JSON.stringify({ name: "lib", version: "2.0.0" }),
+      "node_modules/dep-b/node_modules/lib/index.js": "lib-v2",
+    },
+    nftResult: {
+      [nm("dep-a", "index.js")]: {},
+      [nm("dep-b", "index.js")]: {},
+      [nm("lib", "index.js")]: {},
+      [join(NM, "dep-a/node_modules/lib", "index.js")]: { parents: [nm("dep-a", "index.js")] },
+      [join(NM, "dep-b/node_modules/lib", "index.js")]: { parents: [nm("dep-b", "index.js")] },
+    },
+    expectSymlinks: true,
+  },
 ];
 
 describe("traceNodeModules (mocked nft)", () => {
@@ -293,6 +345,62 @@ describe("traceNodeModules (mocked nft)", () => {
   }
 
   // --- Tests that need custom logic beyond the matrix ---
+
+  it("hoists version with most dependants to top level", async () => {
+    seedPackages(ROOT, {
+      "dep-a": { version: "1.0.0", files: { "index.js": "a" } },
+      "dep-b": { version: "1.0.0", files: { "index.js": "b" } },
+      "dep-c": { version: "1.0.0", files: { "index.js": "c" } },
+      lib: { version: "1.0.0", files: { "index.js": "lib-v1" } },
+    });
+
+    // v2 nested under 3 packages
+    for (const dep of ["dep-a", "dep-b", "dep-c"]) {
+      writtenFiles.set(join(NM, dep, "node_modules/lib/package.json"), JSON.stringify({ name: "lib", version: "2.0.0" }));
+      writtenFiles.set(join(NM, dep, "node_modules/lib/index.js"), "lib-v2");
+    }
+
+    mockNodeFileTrace.mockResolvedValue(createNftResult({
+      [nm("dep-a", "index.js")]: {},
+      [nm("dep-b", "index.js")]: {},
+      [nm("dep-c", "index.js")]: {},
+      [nm("lib", "index.js")]: {},
+      [join(NM, "dep-a/node_modules/lib", "index.js")]: { parents: [nm("dep-a", "index.js")] },
+      [join(NM, "dep-b/node_modules/lib", "index.js")]: { parents: [nm("dep-b", "index.js")] },
+      [join(NM, "dep-c/node_modules/lib", "index.js")]: { parents: [nm("dep-c", "index.js")] },
+    }));
+
+    await traceNodeModules([join(ROOT, "entry.js")], { rootDir: ROOT, outDir: OUT });
+
+    // v1 is root-level (0 parents = most implicit dependants) — should be hoisted
+    const topLevelSymlink = writtenSymlinks.get(join(OUT_NM, "lib"));
+    expect(topLevelSymlink).toContain("lib@1.0.0");
+  });
+
+  it("hoists newest version when dependant counts are equal", async () => {
+    seedPackages(ROOT, {
+      "dep-a": { version: "1.0.0", files: { "index.js": "a" } },
+      "dep-b": { version: "1.0.0", files: { "index.js": "b" } },
+    });
+
+    writtenFiles.set(join(NM, "dep-a/node_modules/lib/package.json"), JSON.stringify({ name: "lib", version: "3.0.0" }));
+    writtenFiles.set(join(NM, "dep-a/node_modules/lib/index.js"), "lib-v3");
+    writtenFiles.set(join(NM, "dep-b/node_modules/lib/package.json"), JSON.stringify({ name: "lib", version: "2.0.0" }));
+    writtenFiles.set(join(NM, "dep-b/node_modules/lib/index.js"), "lib-v2");
+
+    mockNodeFileTrace.mockResolvedValue(createNftResult({
+      [nm("dep-a", "index.js")]: {},
+      [nm("dep-b", "index.js")]: {},
+      [join(NM, "dep-a/node_modules/lib", "index.js")]: { parents: [nm("dep-a", "index.js")] },
+      [join(NM, "dep-b/node_modules/lib", "index.js")]: { parents: [nm("dep-b", "index.js")] },
+    }));
+
+    await traceNodeModules([join(ROOT, "entry.js")], { rootDir: ROOT, outDir: OUT });
+
+    // Equal dependants (1 each) — newest (3.0.0) should be hoisted
+    const topLevelSymlink = writtenSymlinks.get(join(OUT_NM, "lib"));
+    expect(topLevelSymlink).toContain("lib@3.0.0");
+  });
 
   it("invokes all hooks in order", async () => {
     seedPackages(ROOT, {
