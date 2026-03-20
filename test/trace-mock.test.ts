@@ -111,7 +111,10 @@ const scenarios: TraceScenario[] = [
     nftResult: { [nm("pkg-a", "index.js")]: {} },
     opts: {
       transform: [
-        { filter: (id) => id.endsWith(".js"), handler: (code) => code.replace("DEV = true", "DEV = false") },
+        {
+          filter: (id) => id.endsWith(".js"),
+          handler: (code) => code.replace("DEV = true", "DEV = false"),
+        },
       ],
     },
     expectFiles: { "node_modules/pkg-a/index.js": "const DEV = false;" },
@@ -143,13 +146,25 @@ const scenarios: TraceScenario[] = [
       "pkg-a": {
         version: "1.0.0",
         files: { "index.js": "a" },
-        exports: { ".": { production: "./dist/prod.mjs", import: "./dist/dev.mjs", default: "./dist/dev.cjs" } },
+        exports: {
+          ".": {
+            production: "./dist/prod.mjs",
+            import: "./dist/dev.mjs",
+            default: "./dist/dev.cjs",
+          },
+        },
       },
     },
     nftResult: { [nm("pkg-a", "index.js")]: {} },
     expectPkgJson: {
       "node_modules/pkg-a/package.json": {
-        exports: { ".": { production: "./dist/prod.mjs", import: "./dist/dev.mjs", default: "./dist/prod.mjs" } },
+        exports: {
+          ".": {
+            production: "./dist/prod.mjs",
+            import: "./dist/dev.mjs",
+            default: "./dist/prod.mjs",
+          },
+        },
       },
     },
   },
@@ -165,7 +180,10 @@ const scenarios: TraceScenario[] = [
     },
     opts: { writePackageJson: true },
     expectPkgJson: {
-      "package.json": { name: "traced-node-modules", dependencies: { "pkg-a": "1.0.0", "pkg-b": "2.0.0" } },
+      "package.json": {
+        name: "traced-node-modules",
+        dependencies: { "pkg-a": "1.0.0", "pkg-b": "2.0.0" },
+      },
     },
   },
   {
@@ -210,14 +228,19 @@ const scenarios: TraceScenario[] = [
       "pkg-shared": { version: "1.0.0", files: { "index.js": "shared-v1" } },
     },
     extraFiles: {
-      "node_modules/pkg-b/node_modules/pkg-shared/package.json": JSON.stringify({ name: "pkg-shared", version: "2.0.0" }),
+      "node_modules/pkg-b/node_modules/pkg-shared/package.json": JSON.stringify({
+        name: "pkg-shared",
+        version: "2.0.0",
+      }),
       "node_modules/pkg-b/node_modules/pkg-shared/index.js": "shared-v2",
     },
     nftResult: {
       [nm("pkg-a", "index.js")]: {},
       [nm("pkg-b", "index.js")]: {},
       [nm("pkg-shared", "index.js")]: { parents: [nm("pkg-a", "index.js")] },
-      [join(NM, "pkg-b/node_modules/pkg-shared", "index.js")]: { parents: [nm("pkg-b", "index.js")] },
+      [join(NM, "pkg-b/node_modules/pkg-shared", "index.js")]: {
+        parents: [nm("pkg-b", "index.js")],
+      },
     },
     expectSymlinks: true,
   },
@@ -231,11 +254,20 @@ const scenarios: TraceScenario[] = [
     },
     extraFiles: {
       // v2 is nested under dep-a, dep-b, dep-c (3 dependants)
-      "node_modules/dep-a/node_modules/lib/package.json": JSON.stringify({ name: "lib", version: "2.0.0" }),
+      "node_modules/dep-a/node_modules/lib/package.json": JSON.stringify({
+        name: "lib",
+        version: "2.0.0",
+      }),
       "node_modules/dep-a/node_modules/lib/index.js": "lib-v2",
-      "node_modules/dep-b/node_modules/lib/package.json": JSON.stringify({ name: "lib", version: "2.0.0" }),
+      "node_modules/dep-b/node_modules/lib/package.json": JSON.stringify({
+        name: "lib",
+        version: "2.0.0",
+      }),
       "node_modules/dep-b/node_modules/lib/index.js": "lib-v2",
-      "node_modules/dep-c/node_modules/lib/package.json": JSON.stringify({ name: "lib", version: "2.0.0" }),
+      "node_modules/dep-c/node_modules/lib/package.json": JSON.stringify({
+        name: "lib",
+        version: "2.0.0",
+      }),
       "node_modules/dep-c/node_modules/lib/index.js": "lib-v2",
     },
     nftResult: {
@@ -259,9 +291,15 @@ const scenarios: TraceScenario[] = [
       lib: { version: "1.0.0", files: { "index.js": "lib-v1" } },
     },
     extraFiles: {
-      "node_modules/dep-a/node_modules/lib/package.json": JSON.stringify({ name: "lib", version: "3.0.0" }),
+      "node_modules/dep-a/node_modules/lib/package.json": JSON.stringify({
+        name: "lib",
+        version: "3.0.0",
+      }),
       "node_modules/dep-a/node_modules/lib/index.js": "lib-v3",
-      "node_modules/dep-b/node_modules/lib/package.json": JSON.stringify({ name: "lib", version: "2.0.0" }),
+      "node_modules/dep-b/node_modules/lib/package.json": JSON.stringify({
+        name: "lib",
+        version: "2.0.0",
+      }),
       "node_modules/dep-b/node_modules/lib/index.js": "lib-v2",
     },
     nftResult: {
@@ -356,19 +394,24 @@ describe("traceNodeModules (mocked nft)", () => {
 
     // v2 nested under 3 packages
     for (const dep of ["dep-a", "dep-b", "dep-c"]) {
-      writtenFiles.set(join(NM, dep, "node_modules/lib/package.json"), JSON.stringify({ name: "lib", version: "2.0.0" }));
+      writtenFiles.set(
+        join(NM, dep, "node_modules/lib/package.json"),
+        JSON.stringify({ name: "lib", version: "2.0.0" }),
+      );
       writtenFiles.set(join(NM, dep, "node_modules/lib/index.js"), "lib-v2");
     }
 
-    mockNodeFileTrace.mockResolvedValue(createNftResult({
-      [nm("dep-a", "index.js")]: {},
-      [nm("dep-b", "index.js")]: {},
-      [nm("dep-c", "index.js")]: {},
-      [nm("lib", "index.js")]: {},
-      [join(NM, "dep-a/node_modules/lib", "index.js")]: { parents: [nm("dep-a", "index.js")] },
-      [join(NM, "dep-b/node_modules/lib", "index.js")]: { parents: [nm("dep-b", "index.js")] },
-      [join(NM, "dep-c/node_modules/lib", "index.js")]: { parents: [nm("dep-c", "index.js")] },
-    }));
+    mockNodeFileTrace.mockResolvedValue(
+      createNftResult({
+        [nm("dep-a", "index.js")]: {},
+        [nm("dep-b", "index.js")]: {},
+        [nm("dep-c", "index.js")]: {},
+        [nm("lib", "index.js")]: {},
+        [join(NM, "dep-a/node_modules/lib", "index.js")]: { parents: [nm("dep-a", "index.js")] },
+        [join(NM, "dep-b/node_modules/lib", "index.js")]: { parents: [nm("dep-b", "index.js")] },
+        [join(NM, "dep-c/node_modules/lib", "index.js")]: { parents: [nm("dep-c", "index.js")] },
+      }),
+    );
 
     await traceNodeModules([join(ROOT, "entry.js")], { rootDir: ROOT, outDir: OUT });
 
@@ -383,17 +426,25 @@ describe("traceNodeModules (mocked nft)", () => {
       "dep-b": { version: "1.0.0", files: { "index.js": "b" } },
     });
 
-    writtenFiles.set(join(NM, "dep-a/node_modules/lib/package.json"), JSON.stringify({ name: "lib", version: "3.0.0" }));
+    writtenFiles.set(
+      join(NM, "dep-a/node_modules/lib/package.json"),
+      JSON.stringify({ name: "lib", version: "3.0.0" }),
+    );
     writtenFiles.set(join(NM, "dep-a/node_modules/lib/index.js"), "lib-v3");
-    writtenFiles.set(join(NM, "dep-b/node_modules/lib/package.json"), JSON.stringify({ name: "lib", version: "2.0.0" }));
+    writtenFiles.set(
+      join(NM, "dep-b/node_modules/lib/package.json"),
+      JSON.stringify({ name: "lib", version: "2.0.0" }),
+    );
     writtenFiles.set(join(NM, "dep-b/node_modules/lib/index.js"), "lib-v2");
 
-    mockNodeFileTrace.mockResolvedValue(createNftResult({
-      [nm("dep-a", "index.js")]: {},
-      [nm("dep-b", "index.js")]: {},
-      [join(NM, "dep-a/node_modules/lib", "index.js")]: { parents: [nm("dep-a", "index.js")] },
-      [join(NM, "dep-b/node_modules/lib", "index.js")]: { parents: [nm("dep-b", "index.js")] },
-    }));
+    mockNodeFileTrace.mockResolvedValue(
+      createNftResult({
+        [nm("dep-a", "index.js")]: {},
+        [nm("dep-b", "index.js")]: {},
+        [join(NM, "dep-a/node_modules/lib", "index.js")]: { parents: [nm("dep-a", "index.js")] },
+        [join(NM, "dep-b/node_modules/lib", "index.js")]: { parents: [nm("dep-b", "index.js")] },
+      }),
+    );
 
     await traceNodeModules([join(ROOT, "entry.js")], { rootDir: ROOT, outDir: OUT });
 
@@ -412,10 +463,18 @@ describe("traceNodeModules (mocked nft)", () => {
 
     const callOrder: string[] = [];
     const hooks: TraceHooks = {
-      traceStart: vi.fn(() => { callOrder.push("traceStart"); }),
-      traceResult: vi.fn(() => { callOrder.push("traceResult"); }),
-      tracedFiles: vi.fn(() => { callOrder.push("tracedFiles"); }),
-      tracedPackages: vi.fn(() => { callOrder.push("tracedPackages"); }),
+      traceStart: vi.fn(() => {
+        callOrder.push("traceStart");
+      }),
+      traceResult: vi.fn(() => {
+        callOrder.push("traceResult");
+      }),
+      tracedFiles: vi.fn(() => {
+        callOrder.push("tracedFiles");
+      }),
+      tracedPackages: vi.fn(() => {
+        callOrder.push("tracedPackages");
+      }),
     };
 
     await traceNodeModules([join(ROOT, "entry.js")], {

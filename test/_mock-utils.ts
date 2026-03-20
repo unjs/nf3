@@ -71,9 +71,7 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 
 // --- Helpers ---
 
-export function createNftResult(
-  files: Record<string, { parents?: string[]; ignored?: boolean }>,
-) {
+export function createNftResult(files: Record<string, { parents?: string[]; ignored?: boolean }>) {
   const reasons = new Map();
   for (const [file, opts] of Object.entries(files)) {
     reasons.set(file, {

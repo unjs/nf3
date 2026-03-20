@@ -10,46 +10,50 @@
 async function nodeFileTrace(
   files: string[],
   opts?: NodeFileTraceOptions,
-): Promise<NodeFileTraceResult>
+): Promise<NodeFileTraceResult>;
 ```
 
 **Result:**
 
 ```ts
 {
-  fileList: Set<string>          // All traced files (relative to base)
-  esmFileList: Set<string>       // Subset that are ESM modules
-  reasons: Map<string, {         // Why each file was included
-    type: ('initial' | 'resolve' | 'dependency' | 'asset' | 'sharedlib')[]
-    ignored: boolean
-    parents: Set<string>
-  }>
-  warnings: Set<Error>           // Parse/resolution warnings
+  fileList: Set<string>; // All traced files (relative to base)
+  esmFileList: Set<string>; // Subset that are ESM modules
+  reasons: Map<
+    string,
+    {
+      // Why each file was included
+      type: ("initial" | "resolve" | "dependency" | "asset" | "sharedlib")[];
+      ignored: boolean;
+      parents: Set<string>;
+    }
+  >;
+  warnings: Set<Error>; // Parse/resolution warnings
 }
 ```
 
 **Options:**
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `base` | `string` | `process.cwd()` | Base directory for relative paths |
-| `processCwd` | `string` | — | Working directory for processing |
-| `conditions` | `string[]` | `['node']` | Export conditions to resolve |
-| `exports` | `string[]` | — | Fallback for `conditions` |
-| `exportsOnly` | `boolean` | `false` | Only use `exports` field, skip legacy resolution |
-| `ignore` | `string \| string[] \| Function` | — | Paths/patterns/function to exclude |
-| `analysis` | `boolean \| object` | `true` | AST analysis config (see below) |
-| `cache` | `object` | — | Reusable cache (fileCache, statCache, symlinkCache, analysisCache) |
-| `paths` | `Record<string, string>` | — | TypeScript path mappings |
-| `ts` | `boolean` | `true` | Enable `.ts`/`.tsx` resolution |
-| `log` | `boolean` | `false` | Debug logging |
-| `mixedModules` | `boolean` | — | Allow CJS+ESM in same file |
-| `readFile` | `Function` | — | Custom file reader |
-| `stat` | `Function` | — | Custom stat function |
-| `readlink` | `Function` | — | Custom readlink function |
-| `resolve` | `Function` | — | Custom resolver hook |
-| `fileIOConcurrency` | `number` | `1024` | Max concurrent file operations |
-| `depth` | `number` | `Infinity` | Max recursion depth |
+| Option              | Type                             | Default         | Description                                                        |
+| ------------------- | -------------------------------- | --------------- | ------------------------------------------------------------------ |
+| `base`              | `string`                         | `process.cwd()` | Base directory for relative paths                                  |
+| `processCwd`        | `string`                         | —               | Working directory for processing                                   |
+| `conditions`        | `string[]`                       | `['node']`      | Export conditions to resolve                                       |
+| `exports`           | `string[]`                       | —               | Fallback for `conditions`                                          |
+| `exportsOnly`       | `boolean`                        | `false`         | Only use `exports` field, skip legacy resolution                   |
+| `ignore`            | `string \| string[] \| Function` | —               | Paths/patterns/function to exclude                                 |
+| `analysis`          | `boolean \| object`              | `true`          | AST analysis config (see below)                                    |
+| `cache`             | `object`                         | —               | Reusable cache (fileCache, statCache, symlinkCache, analysisCache) |
+| `paths`             | `Record<string, string>`         | —               | TypeScript path mappings                                           |
+| `ts`                | `boolean`                        | `true`          | Enable `.ts`/`.tsx` resolution                                     |
+| `log`               | `boolean`                        | `false`         | Debug logging                                                      |
+| `mixedModules`      | `boolean`                        | —               | Allow CJS+ESM in same file                                         |
+| `readFile`          | `Function`                       | —               | Custom file reader                                                 |
+| `stat`              | `Function`                       | —               | Custom stat function                                               |
+| `readlink`          | `Function`                       | —               | Custom readlink function                                           |
+| `resolve`           | `Function`                       | —               | Custom resolver hook                                               |
+| `fileIOConcurrency` | `number`                         | `1024`          | Max concurrent file operations                                     |
+| `depth`             | `number`                         | `Infinity`      | Max recursion depth                                                |
 
 **Analysis sub-options** (`analysis: { ... }`):
 
@@ -77,18 +81,18 @@ nodeFileTrace(entry files)
 
 ### Key Modules
 
-| File | Role |
-|---|---|
-| `src/node-file-trace.ts` | `Job` class, `nodeFileTrace()`, orchestration |
-| `src/analyze.ts` | AST analysis, dependency extraction (~1200 LOC) |
-| `src/resolve-dependency.ts` | Module resolution (CJS/ESM/exports/imports) |
-| `src/fs.ts` | `CachedFileSystem` — async I/O with concurrency control |
-| `src/utils/static-eval.ts` | Expression evaluator with conditional branch support |
-| `src/utils/special-cases.ts` | Package-specific custom logic (~400+ LOC) |
-| `src/utils/sharedlib-emit.ts` | Native shared library discovery |
-| `src/utils/binary-locators.ts` | node-pre-gyp / nbind resolution |
-| `src/utils/wrappers.ts` | UglifyJS/Webpack wrapper detection |
-| `src/utils/get-package-base.ts` | Package name extraction from paths |
+| File                            | Role                                                    |
+| ------------------------------- | ------------------------------------------------------- |
+| `src/node-file-trace.ts`        | `Job` class, `nodeFileTrace()`, orchestration           |
+| `src/analyze.ts`                | AST analysis, dependency extraction (~1200 LOC)         |
+| `src/resolve-dependency.ts`     | Module resolution (CJS/ESM/exports/imports)             |
+| `src/fs.ts`                     | `CachedFileSystem` — async I/O with concurrency control |
+| `src/utils/static-eval.ts`      | Expression evaluator with conditional branch support    |
+| `src/utils/special-cases.ts`    | Package-specific custom logic (~400+ LOC)               |
+| `src/utils/sharedlib-emit.ts`   | Native shared library discovery                         |
+| `src/utils/binary-locators.ts`  | node-pre-gyp / nbind resolution                         |
+| `src/utils/wrappers.ts`         | UglifyJS/Webpack wrapper detection                      |
+| `src/utils/get-package-base.ts` | Package name extraction from paths                      |
 
 ### `Job` Class (Orchestrator)
 
@@ -164,15 +168,15 @@ Key methods: `emitFile()`, `emitDependency()`, `maybeEmitDep()`, `realpath()`, `
 
 The analyzer recognizes patterns and assigns symbols for special handling:
 
-| Symbol | Pattern | Action |
-|---|---|---|
-| `BINDINGS` | `require('bindings')(opts)` | Resolve native `.node` binding |
-| `NODE_GYP_BUILD` | `require('node-gyp-build')(dir)` | Find prebuilt binary |
-| `NBIND_INIT` | `nbind.init(...)` | Find `.node` file |
-| `EXPRESS_SET` | `app.set('view engine', name)` | Require view engine |
-| `PINO_TRANSPORT` | `pino.transport({ target })` | Extract transport targets |
-| `FS_FN` / `FS_DIR_FN` | `fs.readFile()` etc. | Emit file/directory assets |
-| `BOUND_REQUIRE` | Wrapper functions | Track require through wrappers |
+| Symbol                | Pattern                          | Action                         |
+| --------------------- | -------------------------------- | ------------------------------ |
+| `BINDINGS`            | `require('bindings')(opts)`      | Resolve native `.node` binding |
+| `NODE_GYP_BUILD`      | `require('node-gyp-build')(dir)` | Find prebuilt binary           |
+| `NBIND_INIT`          | `nbind.init(...)`                | Find `.node` file              |
+| `EXPRESS_SET`         | `app.set('view engine', name)`   | Require view engine            |
+| `PINO_TRANSPORT`      | `pino.transport({ target })`     | Extract transport targets      |
+| `FS_FN` / `FS_DIR_FN` | `fs.readFile()` etc.             | Emit file/directory assets     |
+| `BOUND_REQUIRE`       | Wrapper functions                | Track require through wrappers |
 
 ## Caching
 
@@ -218,6 +222,7 @@ Packages with custom logic in `special-cases.ts`:
 ### Native Binding Resolution
 
 After emitting a `.node` file, scans package base for shared libraries:
+
 - macOS: `**/*.dylib`, `**/*.so*`
 - Windows: `**/*.dll`
 - Linux: `**/*.so*`

@@ -22,6 +22,7 @@ test/
 ```
 
 **Three entry points** exported via `package.json`:
+
 - `.` → `dist/index.mjs` — main `traceNodeModules` API
 - `./db` → `dist/db.mjs` — `NodeNativePackages` / `NonBundleablePackages` arrays
 - `./plugin` → `dist/plugin.mjs` — bundler plugin
@@ -41,6 +42,7 @@ Build files → Plugin externalizes modules → Bundler writes output
 ### `traceNodeModules(input, opts)` — `src/trace.ts`
 
 Main function. Steps:
+
 1. Call `@vercel/nft` `nodeFileTrace()` to identify all used files
 2. Filter to `node_modules` files only
 3. Parse package name/version from paths via `parseNodeModulePath()`
@@ -55,6 +57,7 @@ Key internal functions: `writePackage()`, `linkPackage()`, `findPackageParents()
 ### Plugin — `src/plugin.ts`
 
 Rollup/Rolldown/Vite plugin named `externals`:
+
 - `resolveId` hook intercepts imports, filters via include/exclude patterns
 - Marks matching packages as `external: true`
 - Collects externalized paths in `tracedPaths` Set
@@ -64,6 +67,7 @@ Rollup/Rolldown/Vite plugin named `externals`:
 ### Types — `src/types.ts`
 
 Key interfaces:
+
 - `ExternalsPluginOptions` — plugin config (rootDir, include, exclude, trace, traceInclude, conditions)
 - `ExternalsTraceOptions` — tracing config (rootDir, outDir, nft, conditions, traceAlias, chmod, writePackageJson, fullTraceInclude, hooks, transform)
 - `TracedFile` — individual traced file info (path, subpath, parents, pkgPath, pkgName, pkgVersion)
@@ -74,6 +78,7 @@ Key interfaces:
 ### Database — `src/db.ts`
 
 Two arrays:
+
 - `NodeNativePackages` — packages with native bindings (sharp, bcrypt, better-sqlite3, esbuild...)
 - `NonBundleablePackages` — packages with bundler incompatibilities (prisma, dd-trace, playwright...)
 
