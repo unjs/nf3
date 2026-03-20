@@ -65,17 +65,52 @@ describe("externals:applyProductionCondition", () => {
       },
       out: {
         ".": {
-          import: "./dist/prod/index.mjs",
           production: {
-            import: "./dist/prod/index.mjs",
             require: "./dist/prod/index.cjs",
+            import: "./dist/prod/index.mjs",
           },
-          require: "./dist/prod/index.cjs",
           types: "./index.d.ts",
+          require: "./dist/prod/index.cjs",
+          import: "./dist/prod/index.mjs",
         },
       },
     },
   ];
+  it("should not double-process production via shared references", () => {
+    const input = {
+      ".": {
+        production: {
+          import: "./dist/prod.mjs",
+          require: "./dist/prod.cjs",
+        },
+        import: "./dist/dev.mjs",
+        require: "./dist/dev.cjs",
+      },
+    };
+    applyProductionCondition(input as any);
+    const result = JSON.parse(JSON.stringify(input));
+    // Apply again to verify idempotency
+    applyProductionCondition(input as any);
+    expect(input).toEqual(result);
+  });
+
+  it("should not mutate original production value via shared reference", () => {
+    const input = {
+      ".": {
+        production: {
+          node: { import: "./dist/prod.mjs", default: "./dist/prod-default.mjs" },
+        },
+        node: { import: "./dist/dev.mjs", default: "./dist/dev-default.mjs" },
+      },
+    };
+    applyProductionCondition(input as any);
+    // The original production.node should not be mutated by recursion
+    expect((input as any)["."].production.node).toEqual({
+      import: "./dist/prod.mjs",
+      default: "./dist/prod-default.mjs",
+    });
+  });
+
   for (const t of applyProductionConditionCases) {
     it(t.name, () => {
       applyProductionCondition(t.in as any);

@@ -156,9 +156,12 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
       }
     }
 
-    // Copy package.json
+    // Copy package.json (clone to avoid mutating the cached original)
     const pkgJSON = pkg.versions[version]!.pkgJSON;
-    applyProductionCondition(pkgJSON.exports);
+    if (pkgJSON.exports) {
+      pkgJSON.exports = JSON.parse(JSON.stringify(pkgJSON.exports));
+      applyProductionCondition(pkgJSON.exports);
+    }
     const pkgJSONPath = join(outDir, pkgPath, "package.json");
     await fsp.mkdir(dirname(pkgJSONPath), { recursive: true });
     await fsp.writeFile(pkgJSONPath, JSON.stringify(pkgJSON, null, 2), "utf8");
@@ -302,6 +305,7 @@ export function applyProductionCondition(exports: PackageJson["exports"]) {
     }
   }
   for (const key in exports) {
+    if (key === "production") continue;
     applyProductionCondition(exports[key as keyof typeof exports]);
   }
 }
