@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.3.14
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.13...v0.3.14)
+
+### 🩹 Fixes
+
+- Add `@takumi-rs/core` to `NodeNativePackages` ([#31](https://github.com/unjs/nf3/pull/31))
+- Add zigpty and md4x to node native pkgs ([ce71d9a](https://github.com/unjs/nf3/commit/ce71d9a))
+
+### 🏡 Chore
+
+- Updatre deps ([1145043](https://github.com/unjs/nf3/commit/1145043))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+- Kane Wang ([@yeecord](https://github.com/yeecord))
+
 ## v0.3.13
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.12...v0.3.13)
