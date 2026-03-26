@@ -17,5 +17,5 @@ jobs:
       - run: pnpm run lint
         if: runner.os == 'Linux'
       - run: pnpm vitest --coverage
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v6
         with: { token: "${{ secrets.CODECOV_TOKEN }}" }
