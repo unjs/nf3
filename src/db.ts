@@ -11,6 +11,7 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
   "gl", // Native OpenGL bindings
   "@napi-rs/canvas", // N-API canvas bindings
   "@napi-rs/image", // N-API image processing bindings
+  "@takumi-rs/core", // Image Renderer with the same N-API dependency structure
 
   // Crypto / Hashing
   "bcrypt", // Native bcrypt password hashing
