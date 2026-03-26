@@ -74,6 +74,7 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
   "dtrace-provider", // Native DTrace probes
   "microtime", // Native high-resolution timing
   "node-datachannel", // Native WebRTC
+  "zigpty", // Native NAPI bindings
 
   // FFI
   "ffi-napi", // N-API foreign function interface
@@ -112,6 +113,7 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
   "native-reg", // Native Windows registry access
   "integer", // Native 64-bit integer support
   "spawn-sync", // Native spawn_sync fallback
+  "md4x/napi", // N-API bindings for markdown rendering
 ]);
 
 /**
