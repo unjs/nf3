@@ -93,6 +93,19 @@ pnpm build                                   # Build with obuild
 pnpm fmt                                # Format with oxfmt + oxlint
 ```
 
+**Scripts for testing packages:**
+
+- `scripts/analyze.ts` — classifies packages by native binary strategy (prebuilt, gyp, noNative, notInstalled). Installs packages, inspects `.node` files, `prebuilds/`, platform optional deps, `binding.gyp`, etc. Updates `db.ts` comments with status tags.
+- `scripts/trace.ts` — end-to-end trace verification. Installs each package in isolation, runs `traceNodeModules`, then verifies the traced output can actually be imported by Node.js.
+
+Both accept positional args to filter/add packages (defaults to full `NodeNativePackages` list):
+
+```bash
+bun scripts/analyze.ts sharp esbuild     # Analyze specific packages
+bun scripts/trace.ts sharp               # Trace and verify specific packages
+bun scripts/analyze.ts my-new-package    # Works for packages not in the built-in list too
+```
+
 **Build:** Uses `obuild` (Rolldown-based). Config in `build.config.ts` — bundles three entry points, traces own dependencies, minifies them with `oxc-minify`.
 
 **Testing:** Vitest with fixtures in `test/fixture/`. Fixtures include multi-version scoped packages for testing dedup/symlink logic.

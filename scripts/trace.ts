@@ -28,19 +28,27 @@ const c = {
   bold: (s: string) => `\x1b[1m${s}\x1b[0m`,
 };
 
-const { values: args } = parseArgs({
-  options: {
-    package: { type: "string", short: "p", multiple: true },
-  },
+const { positionals } = parseArgs({
+  allowPositionals: true,
 });
 
 const BUN = join(process.env.HOME!, ".bun/bin/bun");
 const rootDir = resolve(fileURLToPath(import.meta.url), "../..");
 const baseDir = join(rootDir, "scripts/.trace");
 
-// Filter packages if -p flag is provided
-const packages = args.package?.length
-  ? NodeNativePackages.filter((p) => args.package!.some((f) => p === f || p.startsWith(f + "/")))
+// Filter packages if positional args provided, otherwise use full list
+const packages = positionals.length
+  ? [
+      ...new Set([
+        ...NodeNativePackages.filter((p) =>
+          positionals.some((f) => p === f || p.startsWith(f + "/")),
+        ),
+        // Include args not matching any built-in package as-is
+        ...positionals.filter(
+          (f) => !NodeNativePackages.some((p) => p === f || p.startsWith(f + "/")),
+        ),
+      ]),
+    ]
   : NodeNativePackages;
 
 if (packages.length === 0) {
