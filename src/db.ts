@@ -5,64 +5,126 @@
  */
 export const NodeNativePackages: readonly string[] = Object.freeze([
   // Graphics / Image processing
-  "canvas", // [prebuilt: .node files] Native Cairo-backed 2D canvas
+  "canvas", // [gyp] Native Cairo-backed 2D canvas
   "sharp", // [prebuilt: napi-rs platform deps] Native libvips image processing
   "@vercel/og", // [prebuilt: native transitive dep] Uses native image generation under the hood
-  "gl", // [prebuilt: .node files] Native OpenGL bindings
+  "gl", // [gyp] Native OpenGL bindings
   "@napi-rs/canvas", // [prebuilt: napi-rs platform deps] N-API canvas bindings
   "@napi-rs/image", // [prebuilt: napi-rs platform deps] N-API image processing bindings
   "@takumi-rs/core", // [prebuilt: napi-rs platform deps] Image Renderer with the same N-API dependency structure
+  "@resvg/resvg-js", // [prebuilt: napi-rs platform deps] Rust SVG renderer
 
-  // Crypto / Hashing
+  // Crypto / Hashing / Auth
   "bcrypt", // [prebuilt: prebuilds dir] Native bcrypt password hashing
-  "kerberos", // [prebuilt: .node files] Native Kerberos authentication
+  "kerberos", // [gyp] Native Kerberos authentication
   "scrypt", // [gyp] Native scrypt key derivation
   "blake-hash", // [prebuilt: prebuilds dir] Native BLAKE hash function
   "sodium-native", // [prebuilt: prebuilds dir] Native libsodium bindings
   "argon2", // [prebuilt: prebuilds dir] Native Argon2 password hashing
   "@node-rs/argon2", // [prebuilt: napi-rs platform deps] N-API Argon2 bindings
   "@node-rs/bcrypt", // [prebuilt: napi-rs platform deps] N-API bcrypt bindings
-  "cpu-features", // [prebuilt: .node files] Native CPU feature detection
+  "@node-rs/jsonwebtoken", // [prebuilt: napi-rs platform deps] N-API JWT bindings
+  "cpu-features", // [gyp] Native CPU feature detection
   "farmhash", // [prebuilt: .node files] Native Google FarmHash bindings
   "@node-rs/xxhash", // [prebuilt: napi-rs platform deps] N-API xxhash bindings
   "@node-rs/crc32", // [prebuilt: napi-rs platform deps] N-API CRC32 bindings
+  "bigint-buffer", // [gyp] Native BigInt buffer conversion
+  "keytar", // [gyp] Native OS keychain access
 
   // Database
-  "better-sqlite3", // [prebuilt: .node files] Native SQLite3 bindings
+  "better-sqlite3", // [gyp] Native SQLite3 bindings
+  "better-sqlite3-multiple-ciphers", // [gyp] Encrypted SQLite variant
+  "sqlite3", // [gyp] Native SQLite3 bindings (node-sqlite3)
   "leveldown", // [prebuilt: prebuilds dir] Native LevelDB bindings
+  "classic-level", // [prebuilt: prebuilds dir] Native LevelDB bindings (leveldown successor)
   "lmdb", // [prebuilt: napi-rs platform deps] Native LMDB bindings
-  "sqlite3", // [prebuilt: .node files] Native SQLite3 bindings (node-sqlite3)
   "libsql", // [prebuilt: napi-rs platform deps] Native LibSQL/Turso bindings
-  "node-rdkafka", // [gyp] Native Kafka client
+  "duckdb", // [gyp] Native analytical DB bindings
+  "rocksdb", // [prebuilt: prebuilds dir] Native RocksDB bindings
+  "level-rocksdb", // [prebuilt: native transitive dep] LevelDB-compatible RocksDB wrapper
+  "pg-native", // [prebuilt: native transitive dep] Native PostgreSQL libpq bindings
+  "oracledb", // [prebuilt: .node files] Native Oracle Database bindings
+  "mongodb-client-encryption", // [gyp] Native MongoDB client-side encryption
+  "odbc", // [gyp] Native ODBC database bindings
+  "ibm_db", // [gyp] Native IBM DB2 bindings
+  "hiredis", // [gyp] Native Redis protocol parser
   "couchbase", // [prebuilt: napi-rs platform deps] Native Couchbase SDK
-  "duckdb", // [prebuilt: .node files] Native analytical DB bindings
   "realm", // [prebuilt: prebuilds dir] Native mobile database bindings
+  "node-rdkafka", // [gyp] Native Kafka client
 
-  // Compression
+  // Compression / Serialization
   "lz4", // [prebuilt: .node files] Native LZ4 compression
-  "zlib-sync", // [prebuilt: .node files] Native synchronous zlib bindings
+  "lz4-napi", // [prebuilt: napi-rs platform deps] N-API LZ4 bindings (napi-rs powered)
+  "zlib-sync", // [gyp] Native synchronous zlib bindings
   "snappy", // [prebuilt: napi-rs platform deps] Native Snappy compression
   "@napi-rs/snappy", // [prebuilt: napi-rs platform deps] N-API Snappy bindings
-  "lz4-napi", // [prebuilt: napi-rs platform deps] N-API LZ4 bindings (napi-rs powered)
-  "msgpackr-extract", // [prebuilt: napi-rs platform deps] Native msgpack extraction
+  "@napi-rs/lzma", // [prebuilt: napi-rs platform deps] N-API LZMA bindings
   "@mongodb-js/zstd", // [gyp] Native zstd bindings used by MongoDB ecosystem
+  "msgpackr-extract", // [prebuilt: napi-rs platform deps] Native msgpack extraction
+  "cbor-extract", // [prebuilt: napi-rs platform deps] Native CBOR extraction
+  "@napi-rs/tar", // [prebuilt: napi-rs platform deps] N-API tar archive handling
 
   // Tooling / Build
-  "deasync", // [prebuilt: .node files] Native event loop de-async
-  "node-sass", // [prebuilt: .node files] Native libsass bindings
+  "esbuild", // [prebuilt: napi-rs platform deps] Go-based bundler with native binaries
+  "rolldown", // [prebuilt: napi-rs platform deps] Rust-based bundler
+  "vite", // [prebuilt: .node files] Native platform deps via rolldown
+  "@rspack/core", // [prebuilt: native transitive dep] Rust-based bundler
+  "@swc/core", // [prebuilt: napi-rs platform deps] Rust-based SWC compiler
+  "@swc-node/register", // [prebuilt: native transitive dep] SWC-based require hook
+  "lightningcss", // [prebuilt: napi-rs platform deps] Rust-based CSS parser/transformer
+  "@parcel/css", // [prebuilt: native transitive dep] Rust-based CSS transformer
   "@parcel/watcher", // [prebuilt: napi-rs platform deps] Native filesystem watcher
   "@parcel/source-map", // [prebuilt: .node files] Native source map processing
-  "@swc/core", // [prebuilt: napi-rs platform deps] Rust-based SWC compiler
-  "esbuild", // [prebuilt: napi-rs platform deps] Go-based bundler with native binaries
-  "lightningcss", // [prebuilt: napi-rs platform deps] Rust-based CSS parser/transformer
   "@biomejs/biome", // [prebuilt: napi-rs platform deps] Rust-based linter/formatter
+  "oxfmt", // [prebuilt: napi-rs platform deps] Rust-based formatter
+  "oxlint", // [prebuilt: napi-rs platform deps] Rust-based linter
+  "oxc-parser", // [prebuilt: napi-rs platform deps] Rust-based JS/TS parser
+  "oxc-transform", // [prebuilt: napi-rs platform deps] Rust-based JS/TS transformer
+  "oxc-resolver", // [prebuilt: napi-rs platform deps] Rust-based module resolver
+  "@ast-grep/napi", // [prebuilt: napi-rs platform deps] Rust-based AST grep
+  "@napi-rs/cli", // [prebuilt: native transitive dep] N-API build toolchain
+  "@node-rs/deno-lint", // [prebuilt: napi-rs platform deps] N-API Deno linter bindings
+  "vize", // [prebuilt: napi-rs platform deps] Rust-based Vue toolchain
+  "node-sass", // [gyp] Native libsass bindings
   "tree-sitter", // [gyp] Native parser generator
-  "re2", // [prebuilt: .node files] Native Google RE2 regex engine
+  "re2", // [gyp] Native Google RE2 regex engine
+  "rollup", // [prebuilt: napi-rs platform deps] Bundler with native platform binaries (v4+)
+  "sass-embedded", // [prebuilt: napi-rs platform deps] Embedded Dart Sass with platform binaries
+  "@tailwindcss/oxide", // [prebuilt: napi-rs platform deps] Tailwind CSS v4 Rust engine
+  "turbo", // [prebuilt: napi-rs platform deps] Turborepo native Rust CLI
+  "deasync", // [prebuilt: .node files] Native event loop de-async
+
+  // ML / AI
+  "@xenova/transformers", // [prebuilt: .node files] "@llama-node/llama-cpp", // [prebuilt: .node files] "@huggingface/transformers", // [prebuilt: native transitive dep] // [prebuilt: .node files] Other
+  "node-llama-cpp", // [prebuilt: napi-rs platform deps] Native llama.cpp bindings
+  "llama-node", // [prebuilt: native transitive dep] Native llama bindings
   "onnxruntime-node", // [prebuilt: .node files] Native ONNX runtime bindings
+  "@tensorflow/tfjs-node", // [gyp] Native TensorFlow.js bindings
+
+  // Observability / Profiling
+  "@sentry/profiling-node", // [prebuilt: native transitive dep] Native V8 profiling bindings
+  "@datadog/native-metrics", // [prebuilt: prebuilds dir] Native V8 metrics collection
+  "@datadog/native-appsec", // [prebuilt: prebuilds dir] Native AppSec bindings
+  "@datadog/native-iast-taint-tracking", // [prebuilt: prebuilds dir] Native IAST taint tracking
+  "@datadog/pprof", // [prebuilt: prebuilds dir] Native pprof profiling
+  "@newrelic/native-metrics", // [prebuilt: prebuilds dir] Native V8 metrics collection
+  "@appsignal/nodejs", // [gyp] Native AppSignal APM agent
+  "@statsig/statsig-node-core", // [prebuilt: napi-rs platform deps] Native Statsig feature flag SDK
+  "v8-profiler-next", // [gyp] Native V8 CPU/heap profiler
+  "heapdump", // [gyp] Native heap snapshot generation
+
+  // Networking
+  "grpc", // [gyp] Native gRPC bindings
+  "zeromq", // [prebuilt: .node files] Native ZeroMQ bindings
+  "unix-dgram", // [gyp] Native Unix datagram sockets
+  "ssh2", // [prebuilt: native transitive dep] Optional native crypto bindings
+  "aws-crt", // [prebuilt: .node files] Native AWS Common Runtime bindings
+  "node-libcurl", // [gyp] Native libcurl bindings
+  "bufferutil", // [prebuilt: prebuilds dir] Native WebSocket buffer operations
+  "utf-8-validate", // [prebuilt: prebuilds dir] Native UTF-8 validation
 
   // System / Platform
-  "edge-js", // [prebuilt: .node files] Native .NET CLR interop
-  "fsevents", // [not installable] Native macOS filesystem events
+  "fsevents", // [prebuilt: .node files] Native macOS filesystem events
   "node-pty", // [prebuilt: prebuilds dir] Native pseudo-terminal bindings
   "usb", // [prebuilt: prebuilds dir] Native USB device access
   "@serialport/bindings-cpp", // [prebuilt: prebuilds dir] Native serial port bindings
@@ -73,6 +135,15 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
   "microtime", // [prebuilt: prebuilds dir] Native high-resolution timing
   "node-datachannel", // [gyp] Native WebRTC
   "zigpty", // [prebuilt: prebuilds dir] Native NAPI bindings
+  "edge-js", // [prebuilt: .node files] Native .NET CLR interop
+  "nsfw", // [gyp] Native file watcher
+  "native-reg", // [prebuilt: prebuilds dir] Native Windows registry access
+  "diskusage", // [gyp] Native disk usage stats
+  "@napi-rs/clipboard", // [prebuilt: napi-rs platform deps] N-API clipboard access
+  "@napi-rs/nice", // [prebuilt: napi-rs platform deps] N-API process priority
+  "@napi-rs/webcodecs", // [prebuilt: napi-rs platform deps] N-API WebCodecs bindings
+  "workerd", // [prebuilt: napi-rs platform deps] Cloudflare Workers runtime binary
+  "node-web-audio-api", // [prebuilt: .node files] Native Web Audio API implementation
 
   // FFI
   "ffi-napi", // [prebuilt: prebuilds dir] N-API foreign function interface
@@ -80,36 +151,19 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
   "ref-struct-napi", // [prebuilt: .node files] N-API native struct type support
   "ref-union-napi", // [prebuilt: .node files] N-API native union type support
 
-  // Networking
-  "grpc", // [gyp] Native gRPC bindings
-  "zeromq", // [prebuilt: .node files] Native ZeroMQ bindings
-  "unix-dgram", // [prebuilt: .node files] Native Unix datagram sockets
-  "ssh2", // [prebuilt: .node files] Optional native crypto bindings
-  "aws-crt", // [prebuilt: .node files] Native AWS Common Runtime bindings
-
-  // XML / Parsing
-  "libxmljs2", // [prebuilt: .node files] Native XML parser
+  // Encoding / Parsing
+  "iconv", // [gyp] Native character encoding (not iconv-lite)
+  "libxmljs2", // [gyp] Native XML parser
   "node-expat", // [prebuilt: .node files] Native XML SAX parser
-
-  // ML / AI
-  "@xenova/transformers", // [prebuilt: .node files] "@llama-node/llama-cpp", // [prebuilt: .node files] "@huggingface/transformers", // [prebuilt: native transitive dep] // [prebuilt: .node files] Other
-  "bufferutil", // [prebuilt: prebuilds dir] Native WebSocket buffer operations
-  "utf-8-validate", // [prebuilt: prebuilds dir] Native UTF-8 validation
-  "keytar", // [prebuilt: .node files] Native OS keychain access
-  "iconv", // [prebuilt: .node files] Native character encoding (not iconv-lite)
-  "nodegit", // [prebuilt: .node files] Native Git bindings
-  "@sentry/profiling-node", // [prebuilt: native transitive dep] Native V8 profiling bindings
-  "@napi-rs/clipboard", // [prebuilt: napi-rs platform deps] N-API clipboard access
-  "better-sqlite3-multiple-ciphers", // [gyp] Encrypted SQLite variant
-  "cbor-extract", // [prebuilt: napi-rs platform deps] Native CBOR extraction
-  "diskusage", // [prebuilt: .node files] Native disk usage stats
-  "nsfw", // [gyp] Native file watcher
-  "native-reg", // [prebuilt: prebuilds dir] Native Windows registry access
-  "integer", // [gyp] Native 64-bit integer support
+  "@node-rs/jieba", // [prebuilt: napi-rs platform deps] N-API Chinese text segmentation
   "md4x/napi", // [prebuilt: .node files] N-API bindings for markdown rendering
-  "node-web-audio-api", // [prebuilt: .node files] Native Web Audio API implementation
-  "@appsignal/nodejs", // [prebuilt: .node files] Native AppSignal APM agent
-  "@statsig/statsig-node-core", // [prebuilt: napi-rs platform deps] Native Statsig feature flag SDK
+
+  // Audio
+  "@discordjs/opus", // [gyp] Native Opus audio codec
+
+  // Other
+  "nodegit", // [gyp] Native Git bindings
+  "integer", // [gyp] Native 64-bit integer support
 ]);
 
 /**
@@ -130,7 +184,7 @@ export const NonBundleablePackages = [
   "youch",
 
   // Database drivers / ORMs
-  "pg-native", // Dynamic native binary loading companion to pg
+  "pg-native", // [prebuilt: native transitive dep] Dynamic native binary loading companion to pg
   "typeorm", // Dynamic entity/driver loading via require()
   "prisma", // CLI with engine binaries and __dirname usage
   "@prisma/client", // CJS module using __dirname incompatible with Rollup/Rolldown bundling

@@ -36,6 +36,16 @@ const BUN = join(process.env.HOME!, ".bun/bin/bun");
 const rootDir = resolve(fileURLToPath(import.meta.url), "../..");
 const baseDir = join(rootDir, "scripts/.trace");
 
+// Packages that cannot be compiled in standard environments
+// (deprecated, platform-restricted, or require unavailable system libs)
+const SkipPackages = [
+  "ibm_db", // Rejects ARM64 Linux
+  "hiredis", // Deprecated, incompatible with Node 22 V8 API
+  "node-rdkafka", // Requires librdkafka (not in Debian repos)
+  "ffi-napi", // Incompatible with Node 22 NAPI
+  "nodegit", // Bundled gyp rejects Python 3
+];
+
 // Filter packages if positional args provided, otherwise use full list
 const packages = positionals.length
   ? [
@@ -49,7 +59,7 @@ const packages = positionals.length
         ),
       ]),
     ]
-  : NodeNativePackages;
+  : NodeNativePackages.filter((p) => !SkipPackages.some((s) => p === s || p.startsWith(s + "/")));
 
 if (packages.length === 0) {
   console.error("No matching packages found.");
