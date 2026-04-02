@@ -100,18 +100,23 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
 
       const fullTraceEntry = resolveFullTraceEntry(opts.fullTraceInclude, pkgName);
       if (fullTraceEntry) {
-        if (!fsp.glob) {
-          throw new Error("`fullTraceInclude` requires Node.js >= 22.0.0 (fs.promises.glob)");
-        }
-        const globPattern = fullTraceEntry.glob || "{**,.**}/{.*,*}";
-        for await (const file of fsp.glob(globPattern, {
-          cwd: tracedFile.pkgPath,
-          exclude: (name) => name === "node_modules",
-        })) {
-          const fullPath = join(tracedFile.pkgPath, file);
-          if (await isFile(fullPath)) {
-            tracedPackageVersion.files.push(fullPath);
+        if (fullTraceEntry.glob) {
+          if (!fsp.glob) {
+            throw new Error(
+              "`fullTraceInclude` glob requires Node.js >= 22.0.0 (fs.promises.glob)",
+            );
           }
+          for await (const file of fsp.glob(fullTraceEntry.glob, {
+            cwd: tracedFile.pkgPath,
+            exclude: (name) => name === "node_modules",
+          })) {
+            const fullPath = join(tracedFile.pkgPath, file);
+            if (await isFile(fullPath)) {
+              tracedPackageVersion.files.push(fullPath);
+            }
+          }
+        } else {
+          tracedPackageVersion.files.push(...(await listPkgFiles(tracedFile.pkgPath)));
         }
       }
     }
@@ -148,20 +153,7 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
         }
         const depVersion = depPkgJSON.version || "0.0.0";
         // Full-trace copy all files from this package
-        const files: string[] = [];
-        for (const entry of await fsp.readdir(depPath, {
-          recursive: true,
-          withFileTypes: true,
-        })) {
-          if (!entry.isFile()) {
-            continue;
-          }
-          const parentPath = entry.parentPath;
-          if (parentPath.slice(depPath.length).includes("node_modules")) {
-            continue;
-          }
-          files.push(join(parentPath, entry.name));
-        }
+        const files = await listPkgFiles(depPath);
         tracedPackages[depName] = {
           name: depName,
           versions: {
@@ -381,6 +373,24 @@ function resolveFullTraceEntry(
     }
   }
   return undefined;
+}
+
+async function listPkgFiles(dir: string): Promise<string[]> {
+  const files: string[] = [];
+  for (const entry of await fsp.readdir(dir, {
+    recursive: true,
+    withFileTypes: true,
+  })) {
+    const fullPath = join(entry.parentPath, entry.name);
+    const relPath = fullPath.slice(dir.length);
+    if (relPath.split("/").includes("node_modules")) {
+      continue;
+    }
+    if (entry.isFile() || (entry.isSymbolicLink() && (await isFile(fullPath)))) {
+      files.push(fullPath);
+    }
+  }
+  return files;
 }
 
 async function isFile(file: string) {

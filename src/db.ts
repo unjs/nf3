@@ -113,10 +113,18 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
 ]);
 
 /**
+ * Packages that should be fully traced (including all source files)
+ */
+export const FullTracePackages = ["usb", "sodium-native", "aws-crt", "youch"] as const;
+
+/**
  * Packages that must be externalized (traced as dependencies) rather than bundled,
  * due to bundler compatibility issues with their module format or dynamic imports.
  */
 export const NonBundleablePackages = [
+  // Has local assets
+  "youch",
+
   // Database drivers / ORMs
   "pg-native", // Dynamic native binary loading companion to pg
   "typeorm", // Dynamic entity/driver loading via require()
