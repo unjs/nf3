@@ -381,13 +381,14 @@ async function listPkgFiles(dir: string): Promise<string[]> {
     recursive: true,
     withFileTypes: true,
   })) {
-    if (!entry.isFile()) {
+    const fullPath = join(entry.parentPath, entry.name);
+    const relPath = fullPath.slice(dir.length);
+    if (relPath.split("/").includes("node_modules")) {
       continue;
     }
-    if (entry.parentPath.slice(dir.length).includes("node_modules")) {
-      continue;
+    if (entry.isFile() || (entry.isSymbolicLink() && await isFile(fullPath))) {
+      files.push(fullPath);
     }
-    files.push(join(entry.parentPath, entry.name));
   }
   return files;
 }
