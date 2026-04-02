@@ -386,7 +386,7 @@ async function listPkgFiles(dir: string): Promise<string[]> {
     if (relPath.split("/").includes("node_modules")) {
       continue;
     }
-    if (entry.isFile() || (entry.isSymbolicLink() && await isFile(fullPath))) {
+    if (entry.isFile() || (entry.isSymbolicLink() && (await isFile(fullPath)))) {
       files.push(fullPath);
     }
   }
