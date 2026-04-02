@@ -11,15 +11,7 @@
  */
 
 import { execSync } from "node:child_process";
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { NodeNativePackages } from "../src/db.ts";
@@ -115,8 +107,7 @@ function analyzePkg(pkg: string): AnalyzeResult {
 
   // Check for platform-specific optional deps (napi-rs style)
   // Matches both unscoped (pkg-linux-x64) and scoped (@scope/linux-x64, @esbuild/darwin-arm64)
-  const platformPattern =
-    /(?:^|-|\/)(linux|darwin|win32|android|freebsd|openbsd|sunos)(?:-|$)/;
+  const platformPattern = /(?:^|-|\/)(linux|darwin|win32|android|freebsd|openbsd|sunos)(?:-|$)/;
   const hasNapiPlatformDeps = optDeps.some((d) => platformPattern.test(d));
 
   // Check if any dep (including regular deps) is a known native package or has native indicators
@@ -130,9 +121,7 @@ function analyzePkg(pkg: string): AnalyzeResult {
         existsSync(join(depDir, "prebuilds")) ||
         existsSync(join(depDir, "prebuild")) ||
         findFiles(depDir, ".node").length > 0 ||
-        Object.keys(depPkg.optionalDependencies || {}).some((dd) =>
-          platformPattern.test(dd),
-        )
+        Object.keys(depPkg.optionalDependencies || {}).some((dd) => platformPattern.test(dd))
       );
     } catch {
       return false;
