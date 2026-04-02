@@ -19,7 +19,7 @@
     "build": "obuild",
     "dev": "vitest dev",
     "lint": "oxlint . && oxfmt --check .",
-    "lint:fix": "automd && oxlint . --fix && oxfmt .",
+    "fmt": "automd && oxlint . --fix && oxfmt .",
     "prepack": "pnpm build",
     "release": "pnpm test && pnpm build && changelogen --release && npm publish && git push --follow-tags",
     "test": "pnpm lint && pnpm test:types && vitest run --coverage",

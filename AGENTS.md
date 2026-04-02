@@ -90,7 +90,7 @@ pnpm install                                 # Install deps
 pnpm vitest run test/<file>                  # Run specific test
 pnpm vitest dev                              # Interactive test mode
 pnpm build                                   # Build with obuild
-pnpm lint:fix                                # Format with oxfmt + oxlint
+pnpm fmt                                # Format with oxfmt + oxlint
 ```
 
 **Build:** Uses `obuild` (Rolldown-based). Config in `build.config.ts` — bundles three entry points, traces own dependencies, minifies them with `oxc-minify`.

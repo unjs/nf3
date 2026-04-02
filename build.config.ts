@@ -93,9 +93,7 @@ export default defineBuildConfig({
       };
       checkLimit("size", totalBytes, expected.bytes);
       checkLimit("file count", totalFiles, expected.files);
-      console.log(
-        `✓ dist size: ${(totalBytes / 1024).toFixed(0)} kB (${totalFiles} files)`,
-      );
+      console.log(`✓ dist size: ${(totalBytes / 1024).toFixed(0)} kB (${totalFiles} files)`);
     },
   },
 });
