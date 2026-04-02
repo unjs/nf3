@@ -14,15 +14,32 @@ import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
 import { NodeNativePackages } from "../src/db.ts";
+
+const { values: args } = parseArgs({
+  options: {
+    package: { type: "string", short: "p", multiple: true },
+  },
+});
 
 const BUN = join(process.env.HOME!, ".bun/bin/bun");
 const rootDir = resolve(fileURLToPath(import.meta.url), "../..");
 
+// Filter packages if -p flag is provided
+const packages = args.package?.length
+  ? NodeNativePackages.filter((p) => args.package!.some((f) => p === f || p.startsWith(f + "/")))
+  : NodeNativePackages;
+
+if (packages.length === 0) {
+  console.error("No matching packages found.");
+  process.exit(1);
+}
+
 // Dedupe subpath exports to base package name (e.g. "md4x/napi" -> "md4x")
 const installPackages = [
   ...new Set(
-    NodeNativePackages.map((p) => {
+    packages.map((p) => {
       // Scoped: @scope/name or @scope/name/subpath -> @scope/name
       if (p.startsWith("@")) {
         const parts = p.split("/");
@@ -35,7 +52,7 @@ const installPackages = [
 ];
 
 console.log(
-  `Found ${NodeNativePackages.length} packages in NodeNativePackages (${installPackages.length} to install)\n`,
+  `Found ${packages.length} packages in NodeNativePackages (${installPackages.length} to install)\n`,
 );
 
 // Use local .tmp dir (gitignored)
@@ -158,7 +175,7 @@ function analyzePkg(pkg: string): AnalyzeResult {
   }
 }
 
-const analyzeResults = await Promise.all(NodeNativePackages.map((pkg) => analyzePkg(pkg)));
+const analyzeResults = await Promise.all(packages.map((pkg) => analyzePkg(pkg)));
 
 const results = {
   prebuilt: [] as PrebuiltResult[],
