@@ -64,5 +64,38 @@ export default defineBuildConfig({
         },
       );
     },
+    async end() {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const expected = { bytes: 550_000, files: 155 };
+      const tolerance = 0.05;
+      let totalBytes = 0;
+      let totalFiles = 0;
+      const walk = (dir: string) => {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+          const p = path.join(dir, entry.name);
+          if (entry.isDirectory()) walk(p);
+          else if (entry.isFile()) {
+            totalBytes += fs.statSync(p).size;
+            totalFiles++;
+          }
+        }
+      };
+      walk("dist");
+      const checkLimit = (label: string, actual: number, baseline: number) => {
+        const max = Math.round(baseline * (1 + tolerance));
+        const min = Math.round(baseline * (1 - tolerance));
+        if (actual > max || actual < min) {
+          throw new Error(
+            `dist ${label} regression: ${actual} (expected ${min}–${max}, baseline ${baseline})`,
+          );
+        }
+      };
+      checkLimit("size", totalBytes, expected.bytes);
+      checkLimit("file count", totalFiles, expected.files);
+      console.log(
+        `✓ dist size: ${(totalBytes / 1024).toFixed(0)} kB (${totalFiles} files)`,
+      );
+    },
   },
 });
