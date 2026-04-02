@@ -102,7 +102,9 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
       if (fullTraceEntry) {
         if (fullTraceEntry.glob) {
           if (!fsp.glob) {
-            throw new Error("`fullTraceInclude` glob requires Node.js >= 22.0.0 (fs.promises.glob)");
+            throw new Error(
+              "`fullTraceInclude` glob requires Node.js >= 22.0.0 (fs.promises.glob)",
+            );
           }
           for await (const file of fsp.glob(fullTraceEntry.glob, {
             cwd: tracedFile.pkgPath,
@@ -114,7 +116,7 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
             }
           }
         } else {
-          tracedPackageVersion.files.push(...await listPkgFiles(tracedFile.pkgPath));
+          tracedPackageVersion.files.push(...(await listPkgFiles(tracedFile.pkgPath)));
         }
       }
     }
