@@ -168,6 +168,40 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
     }
   }
 
+  // Auto-include .node binary files for packages that use dynamic native loading
+  // (node-gyp-build, bindings, prebuild-install, node-pre-gyp)
+  // Matches node-gyp-build, node-gyp-build-optional-packages, bindings,
+  // prebuild-install, node-pre-gyp (and scoped forks like @mapbox/node-pre-gyp)
+  const nativeLoaderRE =
+    /(?:^|\/)(node-gyp-build(?:-optional-packages)?|bindings|prebuild-install|node-pre-gyp)$/;
+  for (const tracedPackage of Object.values(tracedPackages)) {
+    for (const versionEntry of Object.values(tracedPackage.versions)) {
+      const deps = {
+        ...versionEntry.pkgJSON.dependencies,
+        ...versionEntry.pkgJSON.devDependencies,
+      };
+      const hasNativeLoader = Object.keys(deps).some((d) => nativeLoaderRE.test(d));
+      if (!hasNativeLoader && !versionEntry.pkgJSON.gypfile) {
+        const install = versionEntry.pkgJSON.scripts?.install;
+        if (!install || !/node-gyp|pre-gyp|prebuild|napi/.test(install)) {
+          continue;
+        }
+      }
+      // Glob for .node files and prebuilds that weren't statically traced
+      if (fsp.glob) {
+        for await (const file of fsp.glob("**/*.node", {
+          cwd: versionEntry.path,
+          exclude: (name) => name === "node_modules",
+        })) {
+          const fullPath = join(versionEntry.path, file);
+          if (!versionEntry.files.includes(fullPath) && (await isFile(fullPath))) {
+            versionEntry.files.push(fullPath);
+          }
+        }
+      }
+    }
+  }
+
   await opts?.hooks?.tracedPackages?.(tracedPackages);
 
   const usedAliases: Record<string, string> = {};
