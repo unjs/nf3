@@ -2,6 +2,7 @@ import * as fsp from "node:fs/promises";
 import { nodeFileTrace } from "@vercel/nft";
 import { dirname, join, normalize, relative, resolve } from "pathe";
 import semver from "semver";
+import { resolveModulePath } from "exsolve";
 import { isWindows, parseNodeModulePath, readJSON, writeJSON } from "./_utils.ts";
 
 import type { PackageJson } from "pkg-types";
@@ -118,6 +119,60 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
     tracedFile.pkgName = pkgName;
     if (pkgJSON.version) {
       tracedFile.pkgVersion = pkgJSON.version;
+    }
+  }
+
+  // Auto-detect and full-trace optionalDependencies (e.g. platform-specific native bindings)
+  for (const tracedPackage of Object.values(tracedPackages)) {
+    for (const versionEntry of Object.values(tracedPackage.versions)) {
+      const optionalDeps = versionEntry.pkgJSON.optionalDependencies;
+      if (!optionalDeps) {
+        continue;
+      }
+      for (const depName of Object.keys(optionalDeps)) {
+        if (tracedPackages[depName]) {
+          continue;
+        }
+        // Resolve the optional dep from the parent package's location
+        const resolved = resolveModulePath(depName + "/package.json", {
+          try: true,
+          from: versionEntry.path,
+        });
+        if (!resolved) {
+          continue;
+        }
+        const depPath = dirname(resolved);
+        const depPkgJSON = await readJSON(resolved).catch(() => null);
+        if (!depPkgJSON) {
+          continue;
+        }
+        const depVersion = depPkgJSON.version || "0.0.0";
+        // Full-trace copy all files from this package
+        const files: string[] = [];
+        for (const entry of await fsp.readdir(depPath, {
+          recursive: true,
+          withFileTypes: true,
+        })) {
+          if (!entry.isFile()) {
+            continue;
+          }
+          const parentPath = entry.parentPath;
+          if (parentPath.slice(depPath.length).includes("node_modules")) {
+            continue;
+          }
+          files.push(join(parentPath, entry.name));
+        }
+        tracedPackages[depName] = {
+          name: depName,
+          versions: {
+            [depVersion]: {
+              path: depPath,
+              files,
+              pkgJSON: depPkgJSON,
+            },
+          },
+        };
+      }
     }
   }
 
