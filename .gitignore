@@ -9,3 +9,4 @@ dist
 *.tgz
 .tmp
 .analyze
+.trace

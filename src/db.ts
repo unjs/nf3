@@ -85,16 +85,14 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
   "zeromq", // [prebuilt: .node files] Native ZeroMQ bindings
   "unix-dgram", // [prebuilt: .node files] Native Unix datagram sockets
   "ssh2", // [prebuilt: .node files] Optional native crypto bindings
+  "aws-crt", // [prebuilt: .node files] Native AWS Common Runtime bindings
 
   // XML / Parsing
   "libxmljs2", // [prebuilt: .node files] Native XML parser
   "node-expat", // [prebuilt: .node files] Native XML SAX parser
 
   // ML / AI
-  "@xenova/transformers", // [prebuilt: .node files] Native ONNX runtime dependency
-  "@llama-node/llama-cpp", // [prebuilt: .node files] Native llama.cpp bindings
-
-  // Other
+  "@xenova/transformers", // [prebuilt: .node files] "@llama-node/llama-cpp", // [prebuilt: .node files] "@huggingface/transformers", // [prebuilt: native transitive dep] // [prebuilt: .node files] Other
   "bufferutil", // [prebuilt: prebuilds dir] Native WebSocket buffer operations
   "utf-8-validate", // [prebuilt: prebuilds dir] Native UTF-8 validation
   "keytar", // [prebuilt: .node files] Native OS keychain access
@@ -109,6 +107,9 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
   "native-reg", // [prebuilt: prebuilds dir] Native Windows registry access
   "integer", // [gyp] Native 64-bit integer support
   "md4x/napi", // [prebuilt: .node files] N-API bindings for markdown rendering
+  "node-web-audio-api", // [prebuilt: .node files] Native Web Audio API implementation
+  "@appsignal/nodejs", // [prebuilt: .node files] Native AppSignal APM agent
+  "@statsig/statsig-node-core", // [prebuilt: napi-rs platform deps] Native Statsig feature flag SDK
 ]);
 
 /**
@@ -134,5 +135,13 @@ export const NonBundleablePackages = [
   // Other
   "puppeteer", // Downloads Chromium binary; __dirname-based resolution
   "playwright", // Downloads browser binaries; dynamic binary resolution
+  "playwright-core", // Dynamic __dirname-based resolution for browser connection
+  "puppeteer-core", // Dynamic browser protocol resolution
+  "vscode-oniguruma", // Uses .wasm
   "tslib", // Often problematic when bundled
+
+  // Module hooking
+  "@highlight-run/node", // Observability SDK; depends on require-in-the-middle
+  "import-in-the-middle", // Monkey-patches ESM loader hooks
+  "require-in-the-middle", // Monkey-patches require() at runtime
 ];
