@@ -16,7 +16,7 @@ import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:f
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { NodeNativePackages } from "../src/db.ts";
+import { NodeNativePackages, FullTracePackages } from "../src/db.ts";
 import { traceNodeModules } from "../src/trace.ts";
 
 // ANSI colors
@@ -27,8 +27,6 @@ const c = {
   dim: (s: string) => `\x1b[2m${s}\x1b[0m`,
   bold: (s: string) => `\x1b[1m${s}\x1b[0m`,
 };
-
-const fullTrace: string[] = ["lmdb"];
 
 const { values: args } = parseArgs({
   options: {
@@ -109,7 +107,7 @@ async function tracePkg(pkg: string): Promise<TraceResult> {
       rootDir: pkgDir,
       outDir: "dist",
       writePackageJson: true,
-      fullTraceInclude: fullTrace,
+      fullTraceInclude: [...FullTracePackages],
       hooks: {
         tracedPackages(packages) {
           tracedPkgNames = Object.keys(packages);
