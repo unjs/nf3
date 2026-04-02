@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.3.15
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.14...v0.3.15)
+
+### 🚀 Enhancements
+
+- Add items to db ([16cc5ac](https://github.com/unjs/nf3/commit/16cc5ac))
+- **trace:** Auto-detect and copy optionalDependencies ([#35](https://github.com/unjs/nf3/pull/35))
+- **trace:** Add FullTracePackages db ([#36](https://github.com/unjs/nf3/pull/36))
+
+### 🩹 Fixes
+
+- **db:** Remove non-native packages with new analyze script ([#34](https://github.com/unjs/nf3/pull/34))
+
+### 📦 Build
+
+- Exclude platform-specific native packages from traced dist ([8c774f4](https://github.com/unjs/nf3/commit/8c774f4))
+- Add dist size and file count regression check ([b146bc9](https://github.com/unjs/nf3/commit/b146bc9))
+
+### 🏡 Chore
+
+- Update dev deps ([29838e3](https://github.com/unjs/nf3/commit/29838e3))
+- Remove old db test ([e9849fd](https://github.com/unjs/nf3/commit/e9849fd))
+- Add docs for `FullTracePackages` ([7e24bb7](https://github.com/unjs/nf3/commit/7e24bb7))
+- Rename fmt script ([50a4909](https://github.com/unjs/nf3/commit/50a4909))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.14
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.13...v0.3.14)
