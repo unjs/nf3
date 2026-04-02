@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.3.16
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.15...v0.3.16)
+
+### 🚀 Enhancements
+
+- **db:** Expand native packages list ([82ed28d](https://github.com/unjs/nf3/commit/82ed28d))
+- **trace:** Auto-include .node binaries for native packages ([1aa42c8](https://github.com/unjs/nf3/commit/1aa42c8))
+
+### 📦 Build
+
+- Update obuild ([49fd57b](https://github.com/unjs/nf3/commit/49fd57b))
+
+### 🏡 Chore
+
+- Update analyze and trace scripts ([235b221](https://github.com/unjs/nf3/commit/235b221))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.15
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.14...v0.3.15)
