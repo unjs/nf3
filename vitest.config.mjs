@@ -6,4 +6,7 @@ export default defineConfig({
       ignored: ["**/dist/**"],
     },
   },
+  test: {
+    include: ["test/**/*.test.ts"],
+  },
 });
