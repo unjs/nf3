@@ -29,12 +29,14 @@ export default defineBuildConfig({
               tracedPackages(pkgs) {
                 // prettier-ignore
                 const ignorePkgs = [
-                  "agent-base", "chownr", "debug", "has-flag", "https-proxy-agent",
+                  "agent-base", "chownr", "debug", "fsevents", "has-flag", "https-proxy-agent",
                   "minizlib", "ms", "node-fetch", "supports-color", "tar", "tr46",
                   "webidl-conversions", "whatwg-url", "yallist" , "rollup", "typescript"
                 ];
-                for (const pkg of ignorePkgs) {
-                  delete pkgs[pkg];
+                for (const name of Object.keys(pkgs)) {
+                  if (ignorePkgs.includes(name) || name.startsWith("@rollup/rollup-")) {
+                    delete pkgs[name];
+                  }
                 }
                 // prettier-ignore
                 const essentialFields = new Set([
