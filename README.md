@@ -119,6 +119,16 @@ These packages cannot be bundled and should be traced as external dependencies m
 import { NodeNativePackages } from "nf3/db";
 ```
 
+NF3 exports a list of packages that need full tracing (all files copied instead of only NFT-detected ones), because they use dynamic requires or runtime asset loading that static analysis cannot detect. You can use this with the `traceInclude` plugin option to ensure they are always traced:
+
+```js
+import { FullTracePackages } from "nf3/db";
+
+externals({
+  traceInclude: [...FullTracePackages],
+});
+```
+
 NF3 also exports a list of packages that must be externalized rather than bundled, due to bundler compatibility issues with their module format or dynamic imports.
 
 ```js

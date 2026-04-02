@@ -113,7 +113,11 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
 ]);
 
 /**
- * Packages that should be fully traced (including all source files)
+ * Packages that should be fully traced (all files copied, not just NFT-detected ones).
+ *
+ * These packages use dynamic requires, runtime asset loading, or other patterns
+ * that prevent static analysis from detecting all required files.
+ * Can be passed to the plugin's `traceInclude` option to ensure they are always traced.
  */
 export const FullTracePackages = ["usb", "sodium-native", "aws-crt", "youch"] as const;
 
