@@ -27,9 +27,9 @@
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.5.2",
     "@types/semver": "^7.7.1",
-    "@typescript/native-preview": "^7.0.0-dev.20260401.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260404.1",
     "@vercel/nft": "^1.5.0",
     "@vitest/coverage-v8": "^4.1.2",
     "automd": "^0.4.3",
