@@ -81,6 +81,7 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
   "oxc-parser", // [prebuilt: napi-rs platform deps] Rust-based JS/TS parser
   "oxc-transform", // [prebuilt: napi-rs platform deps] Rust-based JS/TS transformer
   "oxc-resolver", // [prebuilt: napi-rs platform deps] Rust-based module resolver
+  "oxc-minify", // [prebuilt: napi-rs platform deps] Rust-based minifier
   "@ast-grep/napi", // [prebuilt: napi-rs platform deps] Rust-based AST grep
   "@napi-rs/cli", // [prebuilt: native transitive dep] N-API build toolchain
   "@node-rs/deno-lint", // [prebuilt: napi-rs platform deps] N-API Deno linter bindings
