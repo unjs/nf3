@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.3.17
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.16...v0.3.17)
+
+### 🚀 Enhancements
+
+- **db:** Add oxc-minify ([3be1bdc](https://github.com/unjs/nf3/commit/3be1bdc))
+
+### 🏡 Chore
+
+- Update deps ([2bc8798](https://github.com/unjs/nf3/commit/2bc8798))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.16
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.15...v0.3.16)
