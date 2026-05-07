@@ -1,5 +1,5 @@
 allowBuilds:
-  '@parcel/watcher': false
+  "@parcel/watcher": false
   esbuild: false
 ignoredBuiltDependencies:
   - "@parcel/watcher"
