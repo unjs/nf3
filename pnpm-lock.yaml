@@ -9,70 +9,70 @@ importers:
   .:
     devDependencies:
       '@rollup/plugin-node-resolve':
-        specifier: ^16.0.3
+        specifier: 16.0.3
         version: 16.0.3(rollup@4.60.3)
       '@types/node':
-        specifier: ^25.6.0
+        specifier: 25.6.0
         version: 25.6.0
       '@types/semver':
-        specifier: ^7.7.1
+        specifier: 7.7.1
         version: 7.7.1
       '@typescript/native-preview':
-        specifier: ^7.0.0-dev.20260507.1
+        specifier: 7.0.0-dev.20260507.1
         version: 7.0.0-dev.20260507.1
       '@vercel/nft':
-        specifier: ^1.5.0
+        specifier: 1.5.0
         version: 1.5.0(rollup@4.60.3)
       '@vitest/coverage-v8':
-        specifier: ^4.1.5
+        specifier: 4.1.5
         version: 4.1.5(vitest@4.1.5)
       automd:
-        specifier: ^0.4.3
+        specifier: 0.4.3
         version: 0.4.3(magicast@0.5.2)
       changelogen:
-        specifier: ^0.6.2
+        specifier: 0.6.2
         version: 0.6.2(magicast@0.5.2)
       eslint-config-unjs:
-        specifier: ^0.6.2
+        specifier: 0.6.2
         version: 0.6.2(eslint@10.3.0(jiti@2.7.0))(typescript@6.0.3)
       exsolve:
-        specifier: ^1.0.8
+        specifier: 1.0.8
         version: 1.0.8
       obuild:
-        specifier: ^0.4.35
+        specifier: 0.4.35
         version: 0.4.35(@typescript/native-preview@7.0.0-dev.20260507.1)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.7.0)(magicast@0.5.2)(typescript@6.0.3)
       oxc-minify:
-        specifier: ^0.129.0
+        specifier: 0.129.0
         version: 0.129.0
       oxfmt:
-        specifier: ^0.48.0
+        specifier: 0.48.0
         version: 0.48.0
       oxlint:
-        specifier: ^1.63.0
+        specifier: 1.63.0
         version: 1.63.0
       pathe:
-        specifier: ^2.0.3
+        specifier: 2.0.3
         version: 2.0.3
       pkg-types:
-        specifier: ^2.3.1
+        specifier: 2.3.1
         version: 2.3.1
       rolldown:
-        specifier: ^1.0.0
+        specifier: 1.0.0
         version: 1.0.0
       rollup:
-        specifier: ^4.60.3
+        specifier: 4.60.3
         version: 4.60.3
       rollup-plugin-esbuild:
-        specifier: ^6.2.1
+        specifier: 6.2.1
         version: 6.2.1(esbuild@0.28.0)(rollup@4.60.3)
       semver:
-        specifier: ^7.7.4
+        specifier: 7.7.4
         version: 7.7.4
       typescript:
-        specifier: ^6.0.3
+        specifier: 6.0.3
         version: 6.0.3
       vitest:
-        specifier: ^4.1.5
+        specifier: 4.1.5
         version: 4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0))
 
 packages:
