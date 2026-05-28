@@ -16,11 +16,27 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
 
   await opts?.hooks?.traceStart?.(input);
 
+  // Safe readFile that stat-checks before reading to avoid crashing on
+  // non-regular files (Unix sockets, FIFOs, device files, etc.).
+  // https://github.com/unjs/nf3/issues/44
+  const safeReadFile = async (path: string): Promise<string | null> => {
+    try {
+      const stat = await fsp.stat(path);
+      if (!stat || !stat.isFile()) {
+        return null;
+      }
+      return (await fsp.readFile(path)).toString();
+    } catch {
+      return null;
+    }
+  };
+
   // Trace used files using nft
   const traceResult = await nodeFileTrace([...input], {
     base: "/",
     exportsOnly: true,
     processCwd: rootDir,
+    readFile: safeReadFile,
     // https://github.com/nitrojs/nitro/pull/1562
     conditions: (opts.conditions || DEFAULT_CONDITIONS).filter(
       (c) => !["require", "import", "default"].includes(c),
