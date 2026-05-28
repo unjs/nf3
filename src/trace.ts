@@ -31,8 +31,16 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
   await opts?.hooks?.traceResult?.(traceResult);
 
   // Resolve traced files
-  const _resolveTracedPath = (p: string) =>
-    fsp.realpath(resolve(opts.nft?.base || "/", p)).then((p) => normalize(p));
+  const _resolveTracedPath = async (p: string) => {
+    try {
+      return normalize(await fsp.realpath(resolve(opts.nft?.base || "/", p)));
+    } catch (error: any) {
+      if (error?.code === "ENOENT") {
+        return;
+      }
+      throw error;
+    }
+  };
 
   const tracedFiles: Record<string, TracedFile> = Object.fromEntries(
     (await Promise.all(
@@ -41,7 +49,7 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
           return;
         }
         const path = await _resolveTracedPath(_path);
-        if (!path.includes("node_modules")) {
+        if (!path?.includes("node_modules")) {
           return;
         }
         if (!(await isFile(path))) {
@@ -52,7 +60,9 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
           return;
         }
         const pkgPath = join(baseDir, pkgName);
-        const parents = await Promise.all([...reasons.parents].map((p) => _resolveTracedPath(p)));
+        const parents = (
+          await Promise.all([...reasons.parents].map((p) => _resolveTracedPath(p)))
+        ).filter((p): p is string => p !== undefined);
         const tracedFile = <TracedFile>{
           path,
           parents,
