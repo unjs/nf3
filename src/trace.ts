@@ -18,12 +18,16 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
 
   // Safe readFile that stat-checks before reading to avoid crashing on
   // non-regular files (Unix sockets, FIFOs, device files, etc.).
+  // Returns empty string instead of null for non-regular files because
+  // @vercel/nft's emitDependency throws "File does not exist" on null,
+  // killing the entire trace. Empty string passes the null check and
+  // the analyzer just finds zero deps, which is correct.
   // https://github.com/unjs/nf3/issues/44
   const safeReadFile = async (path: string): Promise<string | null> => {
     try {
       const stat = await fsp.stat(path);
       if (!stat || !stat.isFile()) {
-        return null;
+        return "";
       }
       return (await fsp.readFile(path)).toString();
     } catch {
