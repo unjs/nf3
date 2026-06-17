@@ -138,11 +138,20 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
         if (tracedPackages[depName]) {
           continue;
         }
-        // Resolve the optional dep from the parent package's location
-        const resolved = resolveModulePath(depName + "/package.json", {
-          try: true,
-          from: versionEntry.path,
-        });
+        // Resolve the optional dep from the parent package's location.
+        // Some platform-bindings packages (e.g. `@img/sharp-libvips-*`) ship a
+        // restrictive `exports` map that omits `./package.json` but still
+        // exposes `./package` — fall back to that so the dylib package gets
+        // copied into the trace output instead of being silently dropped.
+        const resolved =
+          resolveModulePath(depName + "/package.json", {
+            try: true,
+            from: versionEntry.path,
+          }) ||
+          resolveModulePath(depName + "/package", {
+            try: true,
+            from: versionEntry.path,
+          });
         if (!resolved) {
           continue;
         }
