@@ -133,24 +133,36 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
   }
 
   // Force-trace explicitly requested packages (`traceInclude`) that may not be
-  // statically reachable (e.g. native deps loaded dynamically). Resolve each
-  // name from `rootDir`, falling back to the already-traced package roots. Under
-  // pnpm a nested dep is not hoisted and only resolves from the dependent
-  // package's real `.pnpm` location. https://github.com/unjs/nf3/issues/49
-  const traceIncludeNames = (opts.traceInclude || []).filter((n) => !isAbsolute(n));
-  if (traceIncludeNames.length > 0) {
-    const fromCandidates = [
-      rootDir,
-      ...new Set(
-        Object.values(tracedPackages).flatMap((p) => Object.values(p.versions).map((v) => v.path)),
-      ),
-    ];
-    for (const name of traceIncludeNames) {
+  // statically reachable (e.g. native deps loaded dynamically). Each name is
+  // resolved from `rootDir` and from the roots of any traced package that
+  // declares it as a dependency. Under pnpm a nested dep is not hoisted and only
+  // resolves from the dependent package's real `.pnpm` location.
+  // Driving this off declared dependencies (instead of trying every name against
+  // every root) keeps it cheap even when a large allowlist is passed.
+  // https://github.com/unjs/nf3/issues/49
+  const traceIncludeSet = new Set((opts.traceInclude || []).filter((n) => !isAbsolute(n)));
+  if (traceIncludeSet.size > 0) {
+    const resolveFrom = new Map<string, Set<string>>(
+      [...traceIncludeSet].map((name) => [name, new Set([rootDir])]),
+    );
+    for (const tracedPackage of Object.values(tracedPackages)) {
+      for (const versionEntry of Object.values(tracedPackage.versions)) {
+        const deps = {
+          ...versionEntry.pkgJSON.dependencies,
+          ...versionEntry.pkgJSON.peerDependencies,
+          ...versionEntry.pkgJSON.optionalDependencies,
+        };
+        for (const depName of Object.keys(deps)) {
+          resolveFrom.get(depName)?.add(versionEntry.path);
+        }
+      }
+    }
+    for (const [name, froms] of resolveFrom) {
       if (tracedPackages[name]) {
         continue;
       }
       let resolved: string | undefined;
-      for (const from of fromCandidates) {
+      for (const from of froms) {
         // Resolve the bare name (then derive the package root below). Resolving
         // `<name>/package.json` directly is unreliable since a package's
         // `exports` map usually does not expose it.
