@@ -14,39 +14,10 @@ export const DEFAULT_CONDITIONS = ["node", "import", "default"];
 export async function traceNodeModules(input: string[], opts: ExternalsTraceOptions) {
   const rootDir = resolve(opts.rootDir || ".");
 
-  // Force-include packages that may not be statically traceable (e.g. native
-  // deps loaded dynamically). Resolve each name from `rootDir`, falling back to
-  // the locations of the provided inputs. pnpm does not hoist transitive deps to
-  // the top-level node_modules, so they only resolve from the dependent
-  // package's real `.pnpm` location. https://github.com/unjs/nf3/issues/49
-  const allInput = [...input];
-  for (const name of opts.traceInclude || []) {
-    if (isAbsolute(name)) {
-      allInput.push(name);
-      continue;
-    }
-    let resolved = resolveModulePath(name, {
-      try: true,
-      from: rootDir,
-      conditions: opts.conditions,
-    });
-    for (const from of input) {
-      if (resolved) {
-        break;
-      }
-      // Resolve from the real path so resolution walks the real `.pnpm` tree
-      // rather than the symlinked one (where nested deps are not reachable).
-      const realFrom = await fsp.realpath(from).catch(() => from);
-      resolved = resolveModulePath(name, {
-        try: true,
-        from: realFrom,
-        conditions: opts.conditions,
-      });
-    }
-    if (resolved) {
-      allInput.push(resolved);
-    }
-  }
+  // Absolute `traceInclude` entries are traced directly. Bare package names are
+  // resolved later against the traced package roots (see below) to avoid
+  // resolving against the potentially large `input` file list.
+  const allInput = [...input, ...(opts.traceInclude || []).filter((n) => isAbsolute(n))];
 
   await opts?.hooks?.traceStart?.(allInput);
 
@@ -158,6 +129,65 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
     tracedFile.pkgName = pkgName;
     if (pkgJSON.version) {
       tracedFile.pkgVersion = pkgJSON.version;
+    }
+  }
+
+  // Force-trace explicitly requested packages (`traceInclude`) that may not be
+  // statically reachable (e.g. native deps loaded dynamically). Resolve each
+  // name from `rootDir`, falling back to the already-traced package roots. Under
+  // pnpm a nested dep is not hoisted and only resolves from the dependent
+  // package's real `.pnpm` location. https://github.com/unjs/nf3/issues/49
+  const traceIncludeNames = (opts.traceInclude || []).filter((n) => !isAbsolute(n));
+  if (traceIncludeNames.length > 0) {
+    const fromCandidates = [
+      rootDir,
+      ...new Set(
+        Object.values(tracedPackages).flatMap((p) => Object.values(p.versions).map((v) => v.path)),
+      ),
+    ];
+    for (const name of traceIncludeNames) {
+      if (tracedPackages[name]) {
+        continue;
+      }
+      let resolved: string | undefined;
+      for (const from of fromCandidates) {
+        // Resolve the bare name (then derive the package root below). Resolving
+        // `<name>/package.json` directly is unreliable since a package's
+        // `exports` map usually does not expose it.
+        resolved =
+          resolveModulePath(name, { try: true, from, conditions: opts.conditions }) ||
+          resolveModulePath(name + "/package.json", { try: true, from });
+        if (resolved) {
+          break;
+        }
+      }
+      if (!resolved) {
+        continue;
+      }
+      const { dir, name: resolvedName } = parseNodeModulePath(resolved);
+      if (!dir || !resolvedName) {
+        continue;
+      }
+      const depPath = join(dir, resolvedName);
+      const depPkgJSON = await readJSON(join(depPath, "package.json")).catch(() => null);
+      if (!depPkgJSON) {
+        continue;
+      }
+      const depVersion = depPkgJSON.version || "0.0.0";
+      // Full-trace copy all files (native deps load binaries dynamically, so an
+      // nft trace would miss them). Added before the optionalDependencies pass
+      // below so platform-specific bindings are picked up too.
+      const files = await listPkgFiles(depPath);
+      tracedPackages[name] = {
+        name,
+        versions: {
+          [depVersion]: {
+            path: depPath,
+            files,
+            pkgJSON: depPkgJSON,
+          },
+        },
+      };
     }
   }
 
