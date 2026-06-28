@@ -1,0 +1,9 @@
+# Force-commit the simulated pnpm node_modules layout (root .gitignore ignores node_modules)
+!node_modules
+
+# Symlinks recreated at test runtime (see test/pnpm.test.ts) — never commit them
+/node_modules/@fixture/pnpm-app
+/node_modules/.pnpm/@fixture+pnpm-app@1.0.0/node_modules/@fixture/pnpm-native
+
+# Build output
+.output

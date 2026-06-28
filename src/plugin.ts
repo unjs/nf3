@@ -124,10 +124,25 @@ export function externals(opts: ExternalsPluginOptions): Plugin {
     writeBundle: {
       order: "post",
       async handler() {
+        // Resolve `traceInclude` entries. pnpm does not hoist transitive deps
+        // to the top-level node_modules, so a nested package (e.g. a native dep
+        // pulled in indirectly) cannot be resolved from `rootDir`. Fall back to
+        // resolving it from the packages that were externalized during the
+        // build. https://github.com/unjs/nf3/issues/49
+        const traceFromPaths = [...tracedPaths];
         for (const entry of opts.traceInclude || []) {
-          tracedPaths.add(
-            isAbsolute(entry) ? entry : (tryResolve(entry, undefined) ?? resolve(rootDir, entry)),
-          );
+          if (isAbsolute(entry)) {
+            tracedPaths.add(entry);
+            continue;
+          }
+          let resolved = tryResolve(entry, undefined);
+          for (const from of traceFromPaths) {
+            if (resolved) {
+              break;
+            }
+            resolved = tryResolve(entry, from);
+          }
+          tracedPaths.add(resolved ?? resolve(rootDir, entry));
         }
         if (opts.trace === false || tracedPaths.size === 0) {
           return;
