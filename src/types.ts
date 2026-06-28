@@ -77,6 +77,18 @@ export interface ExternalsTraceOptions {
   writePackageJson?: boolean;
 
   /**
+   * Package names (or absolute paths) to force into the trace even when they are
+   * not statically reachable from the input (e.g. native dependencies loaded
+   * dynamically at runtime).
+   *
+   * Each name is resolved from `rootDir` first, then from the locations of the
+   * provided input files. The latter makes it work with pnpm, which does not
+   * hoist transitive dependencies to the top-level `node_modules` — they can
+   * only be resolved from the dependent package's real `.pnpm` location.
+   */
+  traceInclude?: string[];
+
+  /**
    * List of package names to include all files for in the trace (not just nft-detected ones).
    *
    * Each item can be a package name string or a tuple of `[packageName, { glob }]` to customize the glob pattern.

@@ -1,6 +1,6 @@
 import * as fsp from "node:fs/promises";
 import { nodeFileTrace } from "@vercel/nft";
-import { dirname, join, normalize, relative, resolve } from "pathe";
+import { dirname, isAbsolute, join, normalize, relative, resolve } from "pathe";
 import semver from "semver";
 import { resolveModulePath } from "exsolve";
 import { isWindows, parseNodeModulePath, readJSON, writeJSON } from "./_utils.ts";
@@ -14,10 +14,44 @@ export const DEFAULT_CONDITIONS = ["node", "import", "default"];
 export async function traceNodeModules(input: string[], opts: ExternalsTraceOptions) {
   const rootDir = resolve(opts.rootDir || ".");
 
-  await opts?.hooks?.traceStart?.(input);
+  // Force-include packages that may not be statically traceable (e.g. native
+  // deps loaded dynamically). Resolve each name from `rootDir`, falling back to
+  // the locations of the provided inputs. pnpm does not hoist transitive deps to
+  // the top-level node_modules, so they only resolve from the dependent
+  // package's real `.pnpm` location. https://github.com/unjs/nf3/issues/49
+  const allInput = [...input];
+  for (const name of opts.traceInclude || []) {
+    if (isAbsolute(name)) {
+      allInput.push(name);
+      continue;
+    }
+    let resolved = resolveModulePath(name, {
+      try: true,
+      from: rootDir,
+      conditions: opts.conditions,
+    });
+    for (const from of input) {
+      if (resolved) {
+        break;
+      }
+      // Resolve from the real path so resolution walks the real `.pnpm` tree
+      // rather than the symlinked one (where nested deps are not reachable).
+      const realFrom = await fsp.realpath(from).catch(() => from);
+      resolved = resolveModulePath(name, {
+        try: true,
+        from: realFrom,
+        conditions: opts.conditions,
+      });
+    }
+    if (resolved) {
+      allInput.push(resolved);
+    }
+  }
+
+  await opts?.hooks?.traceStart?.(allInput);
 
   // Trace used files using nft
-  const traceResult = await nodeFileTrace([...input], {
+  const traceResult = await nodeFileTrace([...allInput], {
     base: "/",
     exportsOnly: true,
     processCwd: rootDir,

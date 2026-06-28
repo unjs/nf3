@@ -124,30 +124,15 @@ export function externals(opts: ExternalsPluginOptions): Plugin {
     writeBundle: {
       order: "post",
       async handler() {
-        // Resolve `traceInclude` entries. pnpm does not hoist transitive deps
-        // to the top-level node_modules, so a nested package (e.g. a native dep
-        // pulled in indirectly) cannot be resolved from `rootDir`. Fall back to
-        // resolving it from the packages that were externalized during the
-        // build. https://github.com/unjs/nf3/issues/49
-        const traceFromPaths = [...tracedPaths];
-        for (const entry of opts.traceInclude || []) {
-          if (isAbsolute(entry)) {
-            tracedPaths.add(entry);
-            continue;
-          }
-          let resolved = tryResolve(entry, undefined);
-          for (const from of traceFromPaths) {
-            if (resolved) {
-              break;
-            }
-            resolved = tryResolve(entry, from);
-          }
-          tracedPaths.add(resolved ?? resolve(rootDir, entry));
-        }
-        if (opts.trace === false || tracedPaths.size === 0) {
+        if (opts.trace === false || (tracedPaths.size === 0 && !opts.traceInclude?.length)) {
           return;
         }
         const traceOpts = opts.trace === true ? {} : opts.trace;
+        // `traceInclude` packages (e.g. native deps loaded dynamically) are
+        // resolved inside `traceNodeModules` against both `rootDir` and the
+        // traced input locations, so they work with pnpm's non-hoisted layout.
+        // https://github.com/unjs/nf3/issues/49
+        const traceInclude = [...(opts.traceInclude || []), ...(traceOpts?.traceInclude || [])];
         // Pre-resolve fullTraceInclude package names to traced paths
         if (traceOpts?.fullTraceInclude) {
           for (const pkg of traceOpts.fullTraceInclude) {
@@ -163,6 +148,7 @@ export function externals(opts: ExternalsPluginOptions): Plugin {
           conditions: opts.conditions,
           rootDir,
           ...traceOpts,
+          traceInclude,
         });
       },
     },
