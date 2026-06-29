@@ -10,8 +10,10 @@ import {
 } from "./_mock-utils.ts";
 
 const { nodeFileTrace } = await import("@vercel/nft");
+const { realpath } = await import("node:fs/promises");
 const { traceNodeModules } = await import("../src/trace.ts");
 const mockNodeFileTrace = vi.mocked(nodeFileTrace);
+const mockRealpath = vi.mocked(realpath);
 
 // --- Test matrix types ---
 
@@ -317,6 +319,7 @@ describe("traceNodeModules (mocked nft)", () => {
   beforeEach(() => {
     resetMockFs();
     mockNodeFileTrace.mockReset();
+    mockRealpath.mockImplementation((p: any) => Promise.resolve(p));
   });
 
   // --- Matrix-driven tests ---
@@ -383,6 +386,42 @@ describe("traceNodeModules (mocked nft)", () => {
   }
 
   // --- Tests that need custom logic beyond the matrix ---
+
+  it("skips missing traced files and parent paths", async () => {
+    seedPackages(ROOT, {
+      "pkg-a": { version: "1.0.0", files: { "index.js": "a" } },
+    });
+
+    const pkgFile = nm("pkg-a", "index.js");
+    const missingFile = nm("missing-native", "index.js");
+    const missingParent = nm("missing-parent", "index.js");
+
+    mockRealpath.mockImplementation((p: any) => {
+      if (p === missingFile || p === missingParent) {
+        return Promise.reject(Object.assign(new Error("ENOENT"), { code: "ENOENT" }));
+      }
+      return Promise.resolve(p);
+    });
+
+    mockNodeFileTrace.mockResolvedValue(
+      createNftResult({
+        [pkgFile]: { parents: [missingParent] },
+        [missingFile]: { parents: [pkgFile] },
+      }),
+    );
+
+    const tracedFiles = vi.fn();
+    await traceNodeModules([join(ROOT, "entry.js")], {
+      rootDir: ROOT,
+      outDir: OUT,
+      hooks: { tracedFiles },
+    });
+
+    expect(writtenFiles.get(join(OUT, "node_modules/pkg-a/index.js"))).toBe("a");
+    expect(tracedFiles).toHaveBeenCalledWith({
+      [pkgFile]: expect.objectContaining({ parents: [] }),
+    });
+  });
 
   it("hoists version with most dependants to top level", async () => {
     seedPackages(ROOT, {
