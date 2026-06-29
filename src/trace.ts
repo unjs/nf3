@@ -134,16 +134,16 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
 
   // Force-trace explicitly requested packages (`traceInclude`) that may not be
   // statically reachable (e.g. native deps loaded dynamically). Each name is
-  // resolved from `rootDir` and from the roots of any traced package that
-  // declares it as a dependency. Under pnpm a nested dep is not hoisted and only
-  // resolves from the dependent package's real `.pnpm` location.
+  // resolved from the roots of traced packages that declare it as a dependency,
+  // falling back to `rootDir` for app-level deps no traced package declares.
   // Driving this off declared dependencies (instead of trying every name against
   // every root) keeps it cheap even when a large allowlist is passed.
   // https://github.com/unjs/nf3/issues/49
   const traceIncludeSet = new Set((opts.traceInclude || []).filter((n) => !isAbsolute(n)));
   if (traceIncludeSet.size > 0) {
-    const resolveFrom = new Map<string, Set<string>>(
-      [...traceIncludeSet].map((name) => [name, new Set([rootDir])]),
+    // Collect the roots of traced packages that declare each requested name.
+    const declarerRoots = new Map<string, Set<string>>(
+      [...traceIncludeSet].map((name) => [name, new Set<string>()]),
     );
     for (const tracedPackage of Object.values(tracedPackages)) {
       for (const versionEntry of Object.values(tracedPackage.versions)) {
@@ -153,16 +153,20 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
           ...versionEntry.pkgJSON.optionalDependencies,
         };
         for (const depName of Object.keys(deps)) {
-          resolveFrom.get(depName)?.add(versionEntry.path);
+          declarerRoots.get(depName)?.add(versionEntry.path);
         }
       }
     }
-    for (const [name, froms] of resolveFrom) {
+    for (const [name, roots] of declarerRoots) {
       if (tracedPackages[name]) {
         continue;
       }
+      // Resolve from a declaring package's root first so we pick the instance the
+      // dependent actually uses (correct version, and pnpm's non-hoisted nested
+      // location). `rootDir` is only a fallback — otherwise an unrelated copy
+      // hoisted at the root could shadow the dependent's real dependency.
       let resolved: string | undefined;
-      for (const from of froms) {
+      for (const from of [...roots, rootDir]) {
         // Resolve the bare name (then derive the package root below). Resolving
         // `<name>/package.json` directly is unreliable since a package's
         // `exports` map usually does not expose it.

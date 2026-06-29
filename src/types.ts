@@ -81,11 +81,10 @@ export interface ExternalsTraceOptions {
    * not statically reachable from the input (e.g. native dependencies loaded
    * dynamically at runtime).
    *
-   * Each name is resolved from `rootDir` and from the roots of any traced
-   * package that declares it as a dependency. The latter makes it work with
-   * pnpm, which does not hoist transitive dependencies to the top-level
-   * `node_modules` — they can only be resolved from the dependent package's real
-   * `.pnpm` location.
+   * Each name is resolved from the roots of traced packages that declare it as a
+   * dependency (so the instance/version the dependent actually uses is picked,
+   * including pnpm's non-hoisted nested layout), falling back to `rootDir` for
+   * app-level deps that no traced package declares.
    */
   traceInclude?: string[];
 

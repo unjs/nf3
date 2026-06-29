@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
 import { builtinModules } from "node:module";
-import { lstat, mkdir, rm, symlink } from "node:fs/promises";
+import { lstat, mkdir, readFile, rm, symlink } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import * as rolldown from "rolldown";
 
@@ -16,8 +16,15 @@ import { traceNodeModules } from "../src/index.ts";
 // reached via symlinks. Because such packages load their native binary
 // dynamically, nft cannot statically trace them, so they must be force-traced
 // via `traceInclude` (nitro's `traceDeps`). Resolving those names only from
-// `rootDir` fails under pnpm; `traceInclude` must also resolve them from the
+// `rootDir` fails under pnpm; `traceInclude` must resolve them from the
 // dependent package's real `.pnpm` location.
+//
+// The fixture also has an unrelated decoy copy of the native dep hoisted at the
+// project root (`@fixture/pnpm-native@9.9.9`, no native.node). Resolution must
+// prefer the version `pnpm-app` actually depends on (1.0.0, nested in .pnpm)
+// over the root decoy.
+
+const NESTED_VERSION = "1.0.0";
 
 const fixtureDir = fileURLToPath(new URL("fixture-pnpm", import.meta.url));
 const nodeModules = `${fixtureDir}/node_modules`;
@@ -44,10 +51,23 @@ describe("pnpm .pnpm nested dependency tracing", () => {
       await rm(link, { force: true });
       await symlink(target, link, "dir");
     }
-    // Sanity check: the layout mirrors pnpm (native dep reachable only via .pnpm).
+    // Sanity check: the layout mirrors pnpm. pnpm-app is symlinked from the
+    // store, and the only top-level copy of the native dep is the decoy.
     expect((await lstat(`${nodeModules}/@fixture/pnpm-app`)).isSymbolicLink()).toBe(true);
-    expect(existsSync(`${nodeModules}/@fixture/pnpm-native`)).toBe(false);
+    const rootDecoy = JSON.parse(
+      await readFile(`${nodeModules}/@fixture/pnpm-native/package.json`, "utf8"),
+    );
+    expect(rootDecoy.version).toBe("9.9.9");
   });
+
+  async function expectTracedNativeVersion(nativeDir: string) {
+    expect(existsSync(nativeDir), "native package directory traced").toBe(true);
+    const traced = JSON.parse(await readFile(`${nativeDir}/package.json`, "utf8"));
+    expect(traced.version, "picks the dependent's nested version, not the root decoy").toBe(
+      NESTED_VERSION,
+    );
+    expect(existsSync(`${nativeDir}/native.node`), "native binary copied").toBe(true);
+  }
 
   it("traces a nested native dependency from the .pnpm store", async () => {
     const outDir = `${fixtureDir}/.output`;
@@ -61,21 +81,20 @@ describe("pnpm .pnpm nested dependency tracing", () => {
         externals({
           rootDir: fixtureDir,
           traceInclude: ["@fixture/pnpm-native"],
-          trace: { outDir, fullTraceInclude: ["@fixture/pnpm-native"] },
+          trace: { outDir },
         }),
       ],
     });
 
-    const nativeDir = `${outDir}/node_modules/@fixture/pnpm-native`;
-    expect(existsSync(nativeDir), "native package directory traced").toBe(true);
-    expect(existsSync(`${nativeDir}/native.node`), "native binary copied").toBe(true);
+    await expectTracedNativeVersion(`${outDir}/node_modules/@fixture/pnpm-native`);
   });
 
   // Root-cause coverage at the level nitro consumes nf3: nitro uses its own
   // externals plugin and only calls `traceNodeModules`, passing `traceDeps` as
   // names. The native dep here is NOT statically imported by pnpm-app, so it can
-  // only enter the trace via `traceInclude` resolved against the input location.
-  it("traceNodeModules resolves traceInclude against the .pnpm input location", async () => {
+  // only enter the trace via `traceInclude` resolved against the declaring
+  // package's root (not rootDir, where only the decoy lives).
+  it("traceNodeModules resolves traceInclude against the declaring package root", async () => {
     const outDir = `${fixtureDir}/.output-trace`;
     await rm(outDir, { recursive: true, force: true });
 
@@ -83,14 +102,9 @@ describe("pnpm .pnpm nested dependency tracing", () => {
     await traceNodeModules([appEntry], {
       rootDir: fixtureDir,
       outDir,
-      // resolves from rootDir (where it does NOT exist) -> falls back to the
-      // input package's real .pnpm location (where it does).
       traceInclude: ["@fixture/pnpm-native"],
-      fullTraceInclude: ["@fixture/pnpm-native"],
     });
 
-    const nativeDir = `${outDir}/node_modules/@fixture/pnpm-native`;
-    expect(existsSync(nativeDir), "native package directory traced").toBe(true);
-    expect(existsSync(`${nativeDir}/native.node`), "native binary copied").toBe(true);
+    await expectTracedNativeVersion(`${outDir}/node_modules/@fixture/pnpm-native`);
   });
 });
