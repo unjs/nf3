@@ -1,6 +1,6 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { access, readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { isAbsolute, join } from "pathe";
+import { dirname, isAbsolute, join } from "pathe";
 
 import type { PackageJson } from "pkg-types";
 
@@ -96,6 +96,33 @@ export function escapeRegExp(string: string): string {
 
 export async function readJSON(path: string): Promise<any> {
   return JSON.parse(await readFile(path, "utf8"));
+}
+
+/**
+ * Locate a package's directory by walking up `node_modules` from `from`,
+ * mirroring Node.js module resolution.
+ *
+ * Unlike resolving `<name>/package.json` through the module resolver, this does
+ * not rely on the package's `exports` map, so it also finds packages that ship a
+ * restrictive `exports` (e.g. `@img/sharp-libvips-*`, which omit `./package.json`
+ * and a `.` entry, exposing the manifest only via a `./package` alias).
+ */
+export async function resolvePackageDir(name: string, from: string): Promise<string | undefined> {
+  let dir = from;
+  while (true) {
+    const candidate = join(dir, "node_modules", name);
+    try {
+      await access(join(candidate, "package.json"));
+      return candidate;
+    } catch {
+      // not here — keep walking up
+    }
+    const parent = dirname(dir);
+    if (parent === dir) {
+      return undefined;
+    }
+    dir = parent;
+  }
 }
 
 export async function writeJSON(path: string, data: any): Promise<void> {

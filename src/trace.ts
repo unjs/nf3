@@ -3,7 +3,13 @@ import { nodeFileTrace } from "@vercel/nft";
 import { dirname, isAbsolute, join, normalize, relative, resolve } from "pathe";
 import semver from "semver";
 import { resolveModulePath } from "exsolve";
-import { isWindows, parseNodeModulePath, readJSON, writeJSON } from "./_utils.ts";
+import {
+  isWindows,
+  parseNodeModulePath,
+  readJSON,
+  resolvePackageDir,
+  writeJSON,
+} from "./_utils.ts";
 
 import type { PackageJson } from "pkg-types";
 import type { ExternalsTraceOptions, TracedFile, TracedPackage } from "./types.ts";
@@ -228,16 +234,23 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
         if (tracedPackages[depName]) {
           continue;
         }
-        // Resolve the optional dep from the parent package's location
+        // Resolve the optional dep from the parent package's location.
+        // Resolving `<dep>/package.json` through the module resolver fails for
+        // packages that ship a restrictive `exports` map omitting `./package.json`
+        // (e.g. `@img/sharp-libvips-*`, required at runtime via `@rpath` links in
+        // sharp's native addon). When the resolver fails, fall back to locating the
+        // package directory on disk so the dep is still copied into the output.
         const resolved = resolveModulePath(depName + "/package.json", {
           try: true,
           from: versionEntry.path,
         });
-        if (!resolved) {
+        const depPath = resolved
+          ? dirname(resolved)
+          : await resolvePackageDir(depName, versionEntry.path);
+        if (!depPath) {
           continue;
         }
-        const depPath = dirname(resolved);
-        const depPkgJSON = await readJSON(resolved).catch(() => null);
+        const depPkgJSON = await readJSON(join(depPath, "package.json")).catch(() => null);
         if (!depPkgJSON) {
           continue;
         }
