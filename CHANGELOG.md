@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.3.18
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.16...v0.3.18)
+
+### 🚀 Enhancements
+
+- **db:** Add oxc-minify ([3be1bdc](https://github.com/unjs/nf3/commit/3be1bdc))
+
+### 🩹 Fixes
+
+- Trace pnpm nested dependencies via traceInclude ([#50](https://github.com/unjs/nf3/pull/50))
+- **trace:** Skip missing realpath trace entries ([#43](https://github.com/unjs/nf3/pull/43))
+- **trace:** Resolve optional deps by walking node_modules when exports omits package.json ([#48](https://github.com/unjs/nf3/pull/48))
+
+### 🏡 Chore
+
+- Update deps ([2bc8798](https://github.com/unjs/nf3/commit/2bc8798))
+- **release:** V0.3.17 ([34c8f04](https://github.com/unjs/nf3/commit/34c8f04))
+- Update deps ([301efb7](https://github.com/unjs/nf3/commit/301efb7))
+
+### ❤️ Contributors
+
+- Tsushanth ([@tsushanth](https://github.com/tsushanth))
+- Tommy D. Rossi <beats.by.morse@gmail.com>
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+- Pi0x <x@pi0.io>
+
 ## v0.3.17
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.16...v0.3.17)
