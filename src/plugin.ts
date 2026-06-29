@@ -124,15 +124,15 @@ export function externals(opts: ExternalsPluginOptions): Plugin {
     writeBundle: {
       order: "post",
       async handler() {
-        for (const entry of opts.traceInclude || []) {
-          tracedPaths.add(
-            isAbsolute(entry) ? entry : (tryResolve(entry, undefined) ?? resolve(rootDir, entry)),
-          );
-        }
-        if (opts.trace === false || tracedPaths.size === 0) {
+        if (opts.trace === false || (tracedPaths.size === 0 && !opts.traceInclude?.length)) {
           return;
         }
         const traceOpts = opts.trace === true ? {} : opts.trace;
+        // `traceInclude` packages (e.g. native deps loaded dynamically) are
+        // resolved inside `traceNodeModules` against both `rootDir` and the
+        // traced input locations, so they work with pnpm's non-hoisted layout.
+        // https://github.com/unjs/nf3/issues/49
+        const traceInclude = [...(opts.traceInclude || []), ...(traceOpts?.traceInclude || [])];
         // Pre-resolve fullTraceInclude package names to traced paths
         if (traceOpts?.fullTraceInclude) {
           for (const pkg of traceOpts.fullTraceInclude) {
@@ -148,6 +148,7 @@ export function externals(opts: ExternalsPluginOptions): Plugin {
           conditions: opts.conditions,
           rootDir,
           ...traceOpts,
+          traceInclude,
         });
       },
     },
