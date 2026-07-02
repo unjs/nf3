@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.3.19
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.18...v0.3.19)
+
+### 🩹 Fixes
+
+- **trace:** Use `@vercel/nft` CJS default import ([#52](https://github.com/unjs/nf3/pull/52))
+
+### 🏡 Chore
+
+- Update deps ([f508f58](https://github.com/unjs/nf3/commit/f508f58))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.18
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.16...v0.3.18)
