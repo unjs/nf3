@@ -15,9 +15,12 @@ export function resetMockFs() {
 
 // --- vi.mock declarations (hoisted to top-level by vitest) ---
 
-vi.mock("@vercel/nft", () => ({
-  nodeFileTrace: vi.fn(),
-}));
+vi.mock("@vercel/nft", () => {
+  // `src/trace.ts` uses the CJS default import (`import nft from "@vercel/nft"`),
+  // so expose both the named export and a `default` sharing the same spy.
+  const nodeFileTrace = vi.fn();
+  return { nodeFileTrace, default: { nodeFileTrace } };
+});
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const original = await importOriginal<typeof import("node:fs/promises")>();

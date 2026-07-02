@@ -1,5 +1,5 @@
 import * as fsp from "node:fs/promises";
-import { nodeFileTrace } from "@vercel/nft";
+import nft from "@vercel/nft";
 import { dirname, isAbsolute, join, normalize, relative, resolve } from "pathe";
 import semver from "semver";
 import { resolveModulePath } from "exsolve";
@@ -14,6 +14,12 @@ import {
 import type { PackageJson } from "pkg-types";
 import type { ExternalsTraceOptions, TracedFile, TracedPackage } from "./types.ts";
 export type { ExternalsTraceOptions } from "./types.ts";
+
+// Use the CJS default (whole `module.exports`) rather than a named import.
+// `@vercel/nft` is CommonJS and gets minified when bundled into dist; a named
+// `import { nodeFileTrace }` relies on Node's cjs-module-lexer detecting the
+// export from minified text, which fails on older Node versions (see #52).
+const { nodeFileTrace } = nft;
 
 export const DEFAULT_CONDITIONS = ["node", "import", "default"];
 
