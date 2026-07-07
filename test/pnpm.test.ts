@@ -107,4 +107,47 @@ describe("pnpm .pnpm nested dependency tracing", () => {
 
     await expectTracedNativeVersion(`${outDir}/node_modules/@fixture/pnpm-native`);
   });
+
+  // The declarer of the native dep (`pnpm-app`) is *bundled*, not externalized,
+  // so it never becomes a traced package and cannot contribute a declarer root.
+  // nitro supplies the roots of bundled packages via `traceIncludeRoots`, which
+  // is the only way the nested native dep can be resolved from the version the
+  // dependent actually uses. https://github.com/unjs/nf3/issues/49
+  it("resolves traceInclude against a bundled declarer via traceIncludeRoots", async () => {
+    const outDir = `${fixtureDir}/.output-bundled`;
+    await rm(outDir, { recursive: true, force: true });
+
+    const appRoot = `${nodeModules}/.pnpm/@fixture+pnpm-app@1.0.0/node_modules/@fixture/pnpm-app`;
+    await traceNodeModules([`${fixtureDir}/bundled-entry.mjs`], {
+      rootDir: fixtureDir,
+      outDir,
+      traceInclude: ["@fixture/pnpm-native"],
+      traceIncludeRoots: [appRoot],
+    });
+
+    await expectTracedNativeVersion(`${outDir}/node_modules/@fixture/pnpm-native`);
+  });
+
+  // Guards the fix above: without `traceIncludeRoots`, a bundled declarer's
+  // nested native dep resolves only from `rootDir`, which under pnpm holds just
+  // the unrelated hoisted decoy (9.9.9, no native binary) — never the 1.0.0 the
+  // dependent actually uses.
+  it("without traceIncludeRoots, a bundled declarer's nested native dep is missed", async () => {
+    const outDir = `${fixtureDir}/.output-bundled-nofix`;
+    await rm(outDir, { recursive: true, force: true });
+
+    await traceNodeModules([`${fixtureDir}/bundled-entry.mjs`], {
+      rootDir: fixtureDir,
+      outDir,
+      traceInclude: ["@fixture/pnpm-native"],
+    });
+
+    const nativeDir = `${outDir}/node_modules/@fixture/pnpm-native`;
+    const traced = existsSync(`${nativeDir}/package.json`)
+      ? JSON.parse(await readFile(`${nativeDir}/package.json`, "utf8"))
+      : undefined;
+    // Only the decoy is reachable from rootDir, and it ships no native binary.
+    expect(traced?.version).not.toBe(NESTED_VERSION);
+    expect(existsSync(`${nativeDir}/native.node`)).toBe(false);
+  });
 });

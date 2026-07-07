@@ -98,17 +98,31 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
     const declarerRoots = new Map<string, Set<string>>(
       [...traceIncludeSet].map((name) => [name, new Set<string>()]),
     );
+    const addDeclarer = (pkgJSON: PackageJson | null | undefined, root: string) => {
+      if (!pkgJSON) {
+        return;
+      }
+      const deps = {
+        ...pkgJSON.dependencies,
+        ...pkgJSON.peerDependencies,
+        ...pkgJSON.optionalDependencies,
+      };
+      for (const depName of Object.keys(deps)) {
+        declarerRoots.get(depName)?.add(root);
+      }
+    };
     for (const tracedPackage of Object.values(tracedPackages)) {
       for (const versionEntry of Object.values(tracedPackage.versions)) {
-        const deps = {
-          ...versionEntry.pkgJSON.dependencies,
-          ...versionEntry.pkgJSON.peerDependencies,
-          ...versionEntry.pkgJSON.optionalDependencies,
-        };
-        for (const depName of Object.keys(deps)) {
-          declarerRoots.get(depName)?.add(versionEntry.path);
-        }
+        addDeclarer(versionEntry.pkgJSON, versionEntry.path);
       }
+    }
+    // Caller-provided roots of packages that are bundled (not traced) but still
+    // declare `traceInclude` names — e.g. a package the caller bundles that
+    // dynamically loads a native dependency. Without these, such names only
+    // resolve from `rootDir`, which fails under pnpm's non-hoisted layout.
+    for (const root of new Set(opts.traceIncludeRoots || [])) {
+      const pkgJSON = await readJSON(join(root, "package.json")).catch(() => null);
+      addDeclarer(pkgJSON, root);
     }
     for (const [name, roots] of declarerRoots) {
       if (tracedPackages[name]) {
