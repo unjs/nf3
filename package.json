@@ -30,15 +30,15 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@types/node": "^26.1.0",
     "@types/semver": "^7.7.1",
-    "@typescript/native-preview": "7.0.0-dev.20260701.1",
+    "@typescript/native-preview": "latest",
     "@vercel/nft": "^1.10.2",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@vitest/coverage-v8": "^4.1.10",
     "automd": "^0.4.3",
     "changelogen": "^0.6.2",
     "eslint-config-unjs": "^0.6.2",
     "exsolve": "^1.1.0",
     "obuild": "^0.4.37",
-    "oxc-minify": "^0.138.0",
+    "oxc-minify": "^0.139.0",
     "oxfmt": "^0.57.0",
     "oxlint": "^1.72.0",
     "pathe": "^2.0.3",
@@ -48,7 +48,7 @@
     "rollup-plugin-esbuild": "^6.2.1",
     "semver": "^7.8.5",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   },
   "packageManager": "pnpm@11.9.0"
 }
