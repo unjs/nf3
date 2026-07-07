@@ -16,6 +16,7 @@
     "./plugin": "./dist/plugin.mjs"
   },
   "scripts": {
+    "bench": "bun scripts/bench-trace.ts",
     "build": "obuild",
     "dev": "vitest dev",
     "lint": "oxlint . && oxfmt --check .",
