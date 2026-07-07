@@ -29,7 +29,7 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@types/node": "^26.1.0",
     "@types/semver": "^7.7.1",
-    "@typescript/native-preview": "7.0.0-dev.20260701.1",
+    "@typescript/native-preview": "7.0.0-dev.20260704.1",
     "@vercel/nft": "^1.10.2",
     "@vitest/coverage-v8": "^4.1.9",
     "automd": "^0.4.3",
