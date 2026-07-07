@@ -120,10 +120,18 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
     // declare `traceInclude` names — e.g. a package the caller bundles that
     // dynamically loads a native dependency. Without these, such names only
     // resolve from `rootDir`, which fails under pnpm's non-hoisted layout.
-    for (const root of new Set(opts.traceIncludeRoots || [])) {
-      const pkgJSON = await readJSON(join(root, "package.json")).catch(() => null);
-      addDeclarer(pkgJSON, root);
-    }
+    // Normalize against `rootDir` so relative roots resolve predictably (an
+    // unresolved relative path would read the wrong `package.json` and be a
+    // silent no-op). Reads are independent, so run them concurrently.
+    const includeRoots = [...new Set(opts.traceIncludeRoots || [])].map((root) =>
+      resolve(rootDir, root),
+    );
+    await Promise.all(
+      includeRoots.map(async (root) => {
+        const pkgJSON = await readJSON(join(root, "package.json")).catch(() => null);
+        addDeclarer(pkgJSON, root);
+      }),
+    );
     for (const [name, roots] of declarerRoots) {
       if (tracedPackages[name]) {
         continue;

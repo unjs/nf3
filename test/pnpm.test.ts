@@ -128,6 +128,24 @@ describe("pnpm .pnpm nested dependency tracing", () => {
     await expectTracedNativeVersion(`${outDir}/node_modules/@fixture/pnpm-native`);
   });
 
+  // A relative `traceIncludeRoots` entry must resolve against `rootDir`, not
+  // `process.cwd()` — otherwise the declarer's package.json read silently misses
+  // and the nested native dep falls back to the root decoy.
+  it("resolves a relative traceIncludeRoots entry against rootDir", async () => {
+    const outDir = `${fixtureDir}/.output-bundled-relative`;
+    await rm(outDir, { recursive: true, force: true });
+
+    const relAppRoot = "node_modules/.pnpm/@fixture+pnpm-app@1.0.0/node_modules/@fixture/pnpm-app";
+    await traceNodeModules([`${fixtureDir}/bundled-entry.mjs`], {
+      rootDir: fixtureDir,
+      outDir,
+      traceInclude: ["@fixture/pnpm-native"],
+      traceIncludeRoots: [relAppRoot],
+    });
+
+    await expectTracedNativeVersion(`${outDir}/node_modules/@fixture/pnpm-native`);
+  });
+
   // Guards the fix above: without `traceIncludeRoots`, a bundled declarer's
   // nested native dep resolves only from `rootDir`, which under pnpm holds just
   // the unrelated hoisted decoy (9.9.9, no native binary) — never the 1.0.0 the

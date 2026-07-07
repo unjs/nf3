@@ -99,6 +99,8 @@ export interface ExternalsTraceOptions {
    * location — and under pnpm it is not hoisted to `rootDir` either. Pass the
    * roots of such bundled packages here so their declared `traceInclude` names
    * resolve from the instance the dependent actually uses.
+   *
+   * Relative paths are resolved against {@link rootDir}.
    */
   traceIncludeRoots?: string[];
 
