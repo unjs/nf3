@@ -188,14 +188,14 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
         // parent, so multi-version dedup never links the dep under it and it
         // resolves to whichever version got hoisted at runtime.
         if (path) {
-          tracedFiles[path] = <TracedFile>{
+          tracedFiles[path] = {
             path,
             parents: [],
             subpath: parseNodeModulePath(path).subpath,
             pkgName: name,
             pkgVersion: depVersion,
             pkgPath: depPath,
-          };
+          } as TracedFile;
         }
       }
     }
@@ -584,7 +584,7 @@ async function resolveTracedFiles(
         const parents = (await Promise.all([...reasons.parents].map((p) => resolve1(p)))).filter(
           (p): p is string => p !== undefined,
         );
-        const tracedFile = <TracedFile>{ path, parents, subpath, pkgName, pkgPath };
+        const tracedFile = { path, parents, subpath, pkgName, pkgPath } as TracedFile;
         return [path, tracedFile];
       }),
     ).then((r) => r.filter(Boolean))) as [string, TracedFile][],
