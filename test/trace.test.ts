@@ -142,6 +142,35 @@ describe("traceNodeModules", () => {
     await expect(stat(path.join(scope, "dev-dep"))).rejects.toThrow();
   });
 
+  // Regression for https://github.com/unjs/nf3/issues/57
+  // A package force-included via `traceInclude` whose `exports` map is keyed only
+  // by `import`/`require` (no top-level `default` or `./package.json` export) must
+  // still resolve when the caller passes minimal `conditions` (e.g. Nitro's
+  // `["node"]`). Previously it was silently dropped because resolution used the
+  // raw caller conditions, which match none of the package's export keys.
+  it("traces a traceInclude package with import/require-only exports under minimal conditions", async () => {
+    const rootDir = fileURLToPath(new URL("fixture", import.meta.url));
+    const input = fileURLToPath(new URL("fixture/force-include-conditions.mjs", import.meta.url));
+    const outDir = fileURLToPath(new URL("dist/force-include-conditions", import.meta.url));
+
+    await rm(outDir, { recursive: true, force: true });
+    await mkdir(outDir, { recursive: true });
+    await cp(input, `${outDir}/force-include-conditions.mjs`);
+
+    await traceNodeModules([input], {
+      rootDir,
+      outDir,
+      conditions: ["node"],
+      traceInclude: ["@fixture/conditional-exports"],
+    });
+
+    const scope = path.join(outDir, "node_modules", "@fixture");
+    // The force-included package (import/require-only exports) is copied...
+    await expect(stat(path.join(scope, "conditional-exports", "index.mjs"))).resolves.toBeTruthy();
+    // ...along with its transitively-traced runtime dependency.
+    await expect(stat(path.join(scope, "conditional-dep", "index.mjs"))).resolves.toBeTruthy();
+  });
+
   // Regression for https://github.com/unjs/nf3/issues/47
   // `@fixture/native-libvips` mirrors `@img/sharp-libvips-*`: it is declared only
   // as an `optionalDependency` (loaded at runtime via native `@rpath` links, with
