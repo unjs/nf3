@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.3.20
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.19...v0.3.20)
+
+### 🚀 Enhancements
+
+- **trace:** Add `traceIncludeRoots` for bundled declarers ([#56](https://github.com/unjs/nf3/pull/56))
+
+### 🔥 Performance
+
+- **trace:** Parallelize file copies and package writes; fix chmod, exports, and pkgVersion bugs ([3f31c08](https://github.com/unjs/nf3/commit/3f31c08))
+
+### 🩹 Fixes
+
+- **trace:** Follow transitive deps of traceInclude packages ([#55](https://github.com/unjs/nf3/pull/55))
+
+### 💅 Refactors
+
+- **trace:** Use `as` type assertions instead of angle-bracket syntax ([4078a42](https://github.com/unjs/nf3/commit/4078a42))
+
+### 🏡 Chore
+
+- Update deps ([d4bbfe2](https://github.com/unjs/nf3/commit/d4bbfe2))
+
+### ✅ Tests
+
+- **bench:** Add traceNodeModules benchmark suite over the fixture tree ([1d68864](https://github.com/unjs/nf3/commit/1d68864))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+- Pi0x <x@pi0.io>
+
 ## v0.3.19
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.18...v0.3.19)
