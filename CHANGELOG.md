@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.21
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.20...v0.3.21)
+
+### 🩹 Fixes
+
+- **trace:** Resolve `traceInclude` packages under minimal conditions ([#57](https://github.com/unjs/nf3/pull/57), [#58](https://github.com/unjs/nf3/pull/58))
+
+### ❤️ Contributors
+
+- Pi0x <x@pi0.io>
+
 ## v0.3.20
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.19...v0.3.20)
