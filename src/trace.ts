@@ -26,6 +26,10 @@ export const DEFAULT_CONDITIONS = ["node", "import", "default"];
 
 const JS_FILE_RE = /\.(?:c|m)?js$/;
 
+// Bounds concurrent filesystem operations (copy/read/write) to avoid EMFILE
+// while still overlapping I/O latency across the many small files we copy.
+const FS_CONCURRENCY = 32;
+
 export async function traceNodeModules(input: string[], opts: ExternalsTraceOptions) {
   const rootDir = resolve(opts.rootDir || ".");
 
@@ -296,12 +300,14 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
       }
       // Glob for .node files and prebuilds that weren't statically traced
       if (fsp.glob) {
+        const existing = new Set(versionEntry.files);
         for await (const file of fsp.glob("**/*.node", {
           cwd: versionEntry.path,
           exclude: (name) => name === "node_modules",
         })) {
           const fullPath = join(versionEntry.path, file);
-          if (!versionEntry.files.includes(fullPath) && (await isFile(fullPath))) {
+          if (!existing.has(fullPath) && (await isFile(fullPath))) {
+            existing.add(fullPath);
             versionEntry.files.push(fullPath);
           }
         }
@@ -315,43 +321,81 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
 
   const outDir = resolve(rootDir, opts.outDir || "dist", "node_modules");
 
+  // Bound all fs operations through a single shared limiter so that nested
+  // parallelism (files within a package × packages in parallel) can't exhaust
+  // file descriptors.
+  const limitFS = createLimiter(FS_CONCURRENCY);
+
+  // The set of transformers that have a handler is constant across the run; only
+  // their per-file `filter(src)` must be re-evaluated. Precompute once.
+  const activeTransforms = (opts.transform || []).filter((t) => t?.handler);
+
+  // Deduplicate `mkdir` across files that share a target directory. Caching the
+  // promise (not just a flag) also collapses concurrent creations of the same dir.
+  const dirPromises = new Map<string, Promise<void>>();
+  const ensureDir = (dir: string): Promise<void> => {
+    let p = dirPromises.get(dir);
+    if (!p) {
+      p = fsp.mkdir(dir, { recursive: true }).then(() => {});
+      dirPromises.set(dir, p);
+    }
+    return p;
+  };
+
   const writePackage = async (name: string, version: string, _pkgPath?: string) => {
     // Find pkg
     const pkg = tracedPackages[name]!;
     const pkgPath = _pkgPath || pkg.name;
 
-    // Copy files
-    for (const src of pkg.versions[version]!.files) {
-      const { subpath } = parseNodeModulePath(src);
-      if (!subpath) {
-        continue;
-      }
-      const dst = resolve(outDir, pkgPath, subpath);
-      await fsp.mkdir(dirname(dst), { recursive: true });
+    // Copy files. Each file targets a distinct `dst`, so copies are independent
+    // and run concurrently under the shared fs limiter.
+    await Promise.all(
+      pkg.versions[version]!.files.map((src) =>
+        limitFS(async () => {
+          const { subpath } = parseNodeModulePath(src);
+          if (!subpath) {
+            return;
+          }
+          const dst = resolve(outDir, pkgPath, subpath);
+          await ensureDir(dirname(dst));
 
-      const transformers = (opts.transform || []).filter((t) => t?.filter?.(src) && t.handler);
-      if (transformers.length > 0) {
-        let content = await fsp.readFile(src, "utf8");
-        for (const transformer of transformers) {
-          content = (await transformer.handler(content, src)) ?? content;
-        }
-        await fsp.writeFile(dst, content, "utf8");
-      } else {
-        await fsp.copyFile(src, dst);
-      }
-      if (opts.chmod) {
-        await fsp.chmod(dst, opts.chmod === true ? 0o644 : opts.chmod);
-      }
-    }
+          const transformers = activeTransforms.filter((t) => t.filter?.(src));
+          const transformed = transformers.length > 0;
+          if (transformed) {
+            let content = await fsp.readFile(src, "utf8");
+            for (const transformer of transformers) {
+              content = (await transformer.handler(content, src)) ?? content;
+            }
+            await fsp.writeFile(dst, content, "utf8");
+          } else {
+            await fsp.copyFile(src, dst);
+          }
+          if (opts.chmod === true) {
+            // Preserve original permissions. `copyFile` already copies the source
+            // mode, so only the transform branch (`writeFile`, which creates the
+            // file with default perms) needs an explicit copy of the source mode.
+            if (transformed) {
+              await fsp.chmod(dst, (await fsp.stat(src)).mode & 0o777);
+            }
+          } else if (opts.chmod) {
+            await fsp.chmod(dst, opts.chmod);
+          }
+        }),
+      ),
+    );
 
-    // Copy package.json (clone to avoid mutating the cached original)
-    const pkgJSON = pkg.versions[version]!.pkgJSON;
+    // Copy package.json. Clone (shallow, with a deep-cloned `exports`) so the
+    // production-condition rewrite never mutates the object cached in
+    // `tracedPackages`/`pkgCache`.
+    const cachedPkgJSON = pkg.versions[version]!.pkgJSON;
+    const pkgJSON = cachedPkgJSON.exports
+      ? { ...cachedPkgJSON, exports: structuredClone(cachedPkgJSON.exports) }
+      : cachedPkgJSON;
     if (pkgJSON.exports) {
-      pkgJSON.exports = JSON.parse(JSON.stringify(pkgJSON.exports));
       applyProductionCondition(pkgJSON.exports);
     }
     const pkgJSONPath = join(outDir, pkgPath, "package.json");
-    await fsp.mkdir(dirname(pkgJSONPath), { recursive: true });
+    await ensureDir(dirname(pkgJSONPath));
     await fsp.writeFile(pkgJSONPath, JSON.stringify(pkgJSON, null, 2), "utf8");
 
     // Link aliases
@@ -428,32 +472,45 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
     }),
   );
 
-  // Write packages with multiple versions
-  for (const [pkgName, pkgVersions] of Object.entries(multiVersionPkgs)) {
-    const versionEntries = Object.entries(pkgVersions).sort(([v1, p1], [v2, p2]) => {
-      // 1. Most dependants to be hoisted (0 parents = root-level = most implicit dependants)
-      const d1 = p1.length === 0 ? Infinity : p1.length;
-      const d2 = p2.length === 0 ? Infinity : p2.length;
-      if (d1 !== d2) {
-        return d2 - d1;
+  // Write packages with multiple versions. Different package names write to
+  // disjoint output paths, so process them concurrently. Versions *within* one
+  // name stay sequential: the first (sorted-winner) version must claim the
+  // top-level link before the others see it as taken.
+  await Promise.all(
+    Object.entries(multiVersionPkgs).map(async ([pkgName, pkgVersions]) => {
+      const versionEntries = Object.entries(pkgVersions).sort(([v1, p1], [v2, p2]) => {
+        // 1. Most dependants to be hoisted (0 parents = root-level = most implicit dependants)
+        const d1 = p1.length === 0 ? Infinity : p1.length;
+        const d2 = p2.length === 0 ? Infinity : p2.length;
+        if (d1 !== d2) {
+          return d2 - d1;
+        }
+        // 2. Newest version to be hoisted
+        return compareVersions(v1, v2);
+      });
+      for (const [version, parentPkgs] of versionEntries) {
+        // Write each version into node_modules/.nf3/{name}@{version}
+        await writePackage(pkgName, version, `.nf3/${pkgName}@${version}`);
+        // Link one version to the top level (for indirect bundle deps)
+        await linkPackage(`.nf3/${pkgName}@${version}`, `${pkgName}`);
+        // Link to parent packages (distinct targets — safe to run in parallel)
+        await Promise.all(
+          parentPkgs.map((parentPkg) => {
+            const parentPkgName = parentPkg.replace(/@[^@]+$/, "");
+            return multiVersionPkgs[parentPkgName]
+              ? linkPackage(
+                  `.nf3/${pkgName}@${version}`,
+                  `.nf3/${parentPkg}/node_modules/${pkgName}`,
+                )
+              : linkPackage(
+                  `.nf3/${pkgName}@${version}`,
+                  `${parentPkgName}/node_modules/${pkgName}`,
+                );
+          }),
+        );
       }
-      // 2. Newest version to be hoisted
-      return compareVersions(v1, v2);
-    });
-    for (const [version, parentPkgs] of versionEntries) {
-      // Write each version into node_modules/.nf3/{name}@{version}
-      await writePackage(pkgName, version, `.nf3/${pkgName}@${version}`);
-      // Link one version to the top level (for indirect bundle deps)
-      await linkPackage(`.nf3/${pkgName}@${version}`, `${pkgName}`);
-      // Link to parent packages
-      for (const parentPkg of parentPkgs) {
-        const parentPkgName = parentPkg.replace(/@[^@]+$/, "");
-        await (multiVersionPkgs[parentPkgName]
-          ? linkPackage(`.nf3/${pkgName}@${version}`, `.nf3/${parentPkg}/node_modules/${pkgName}`)
-          : linkPackage(`.nf3/${pkgName}@${version}`, `${parentPkgName}/node_modules/${pkgName}`));
-      }
-    }
-  }
+    }),
+  );
 
   // Write an informative package.json
   if (opts.writePackageJson) {
@@ -489,13 +546,25 @@ async function resolveTracedFiles(
   base: string,
   seen?: Set<string>,
 ): Promise<Record<string, TracedFile>> {
+  // Memoize path resolution: parents are themselves traced files and a popular
+  // module is the parent of many files, so the same path would otherwise be
+  // `realpath`'d many times over.
+  const resolveCache = new Map<string, Promise<string | undefined>>();
+  const resolve1 = (p: string): Promise<string | undefined> => {
+    let cached = resolveCache.get(p);
+    if (!cached) {
+      cached = resolveTracedPath(base, p);
+      resolveCache.set(p, cached);
+    }
+    return cached;
+  };
   return Object.fromEntries(
     (await Promise.all(
       [...traceResult.reasons.entries()].map(async ([_path, reasons]) => {
         if (reasons.ignored) {
           return;
         }
-        const path = await resolveTracedPath(base, _path);
+        const path = await resolve1(_path);
         if (!path?.includes("node_modules")) {
           return;
         }
@@ -512,9 +581,9 @@ async function resolveTracedFiles(
           return;
         }
         const pkgPath = join(baseDir, pkgName);
-        const parents = (
-          await Promise.all([...reasons.parents].map((p) => resolveTracedPath(base, p)))
-        ).filter((p): p is string => p !== undefined);
+        const parents = (await Promise.all([...reasons.parents].map((p) => resolve1(p)))).filter(
+          (p): p is string => p !== undefined,
+        );
         const tracedFile = <TracedFile>{ path, parents, subpath, pkgName, pkgPath };
         return [path, tracedFile];
       }),
@@ -596,10 +665,36 @@ async function indexTracedFiles(
     }
     tracedPackageVersion.files.push(tracedFile.path);
     tracedFile.pkgName = pkgName;
-    if (pkgJSON.version) {
-      tracedFile.pkgVersion = pkgJSON.version;
-    }
+    // Default to "0.0.0" to match the version key used above; leaving this
+    // undefined makes `findPackageParents` emit `name@undefined` targets that
+    // point at a nonexistent `.nf3/name@undefined` dir (broken symlinks).
+    tracedFile.pkgVersion = pkgJSON.version || "0.0.0";
   }
+}
+
+// Minimal bounded-concurrency runner (no dependency). Runs at most
+// `concurrency` tasks at once, queueing the rest, and propagates task errors.
+function createLimiter(concurrency: number) {
+  let active = 0;
+  const queue: Array<() => void> = [];
+  return function limit<T>(fn: () => Promise<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const run = () => {
+        active++;
+        fn()
+          .then(resolve, reject)
+          .finally(() => {
+            active--;
+            queue.shift()?.();
+          });
+      };
+      if (active < concurrency) {
+        run();
+      } else {
+        queue.push(run);
+      }
+    });
+  };
 }
 
 function compareVersions(v1 = "0.0.0", v2 = "0.0.0") {
