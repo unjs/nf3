@@ -132,6 +132,15 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
         addDeclarer(pkgJSON, root);
       }),
     );
+    // Resolve `traceInclude` names with a permissive superset of the caller's
+    // conditions. `traceInclude` only needs to *locate* a package to copy it, so
+    // widening conditions never changes runtime behaviour — but resolving with
+    // the raw caller conditions (e.g. Nitro's `["node"]`) silently drops packages
+    // whose `exports` are keyed only by `import`/`require`, with no top-level
+    // `default` or `./package.json` export. https://github.com/unjs/nf3/issues/57
+    const includeConditions = [
+      ...new Set([...(opts.conditions || DEFAULT_CONDITIONS), "import", "require", "default"]),
+    ];
     for (const [name, roots] of declarerRoots) {
       if (tracedPackages[name]) {
         continue;
@@ -146,7 +155,7 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
         // `<name>/package.json` directly is unreliable since a package's
         // `exports` map usually does not expose it.
         resolved =
-          resolveModulePath(name, { try: true, from, conditions: opts.conditions }) ||
+          resolveModulePath(name, { try: true, from, conditions: includeConditions }) ||
           resolveModulePath(name + "/package.json", { try: true, from });
         if (resolved) {
           break;
