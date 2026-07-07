@@ -89,6 +89,22 @@ export interface ExternalsTraceOptions {
   traceInclude?: string[];
 
   /**
+   * Additional package roots to consider as declarers when resolving
+   * {@link traceInclude} names.
+   *
+   * `traceInclude` names are normally resolved from the roots of *traced*
+   * packages that declare them. A package that is bundled by the caller (rather
+   * than externalized) never becomes a traced package, so a native dependency it
+   * declares (e.g. `sharp` loaded dynamically) cannot be resolved from its real
+   * location — and under pnpm it is not hoisted to `rootDir` either. Pass the
+   * roots of such bundled packages here so their declared `traceInclude` names
+   * resolve from the instance the dependent actually uses.
+   *
+   * Relative paths are resolved against {@link rootDir}.
+   */
+  traceIncludeRoots?: string[];
+
+  /**
    * List of package names to include all files for in the trace (not just nft-detected ones).
    *
    * Each item can be a package name string or a tuple of `[packageName, { glob }]` to customize the glob pattern.
