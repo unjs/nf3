@@ -11,6 +11,7 @@ import {
   writeJSON,
 } from "./_utils.ts";
 
+import type { NodeFileTraceOptions } from "@vercel/nft";
 import type { PackageJson } from "pkg-types";
 import type { ExternalsTraceOptions, TracedFile, TracedPackage } from "./types.ts";
 export type { ExternalsTraceOptions } from "./types.ts";
@@ -23,6 +24,8 @@ const { nodeFileTrace } = nft;
 
 export const DEFAULT_CONDITIONS = ["node", "import", "default"];
 
+const JS_FILE_RE = /\.(?:c|m)?js$/;
+
 export async function traceNodeModules(input: string[], opts: ExternalsTraceOptions) {
   const rootDir = resolve(opts.rootDir || ".");
 
@@ -33,8 +36,11 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
 
   await opts?.hooks?.traceStart?.(allInput);
 
-  // Trace used files using nft
-  const traceResult = await nodeFileTrace([...allInput], {
+  const base = opts.nft?.base || "/";
+
+  // Shared nft options so the primary trace and the follow-up transitive trace
+  // (for force-included packages, below) resolve modules identically.
+  const nftOptions: NodeFileTraceOptions = {
     base: "/",
     exportsOnly: true,
     processCwd: rootDir,
@@ -43,116 +49,35 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
       (c) => !["require", "import", "default"].includes(c),
     ),
     ...opts.nft,
-  });
+  };
+
+  // Trace used files using nft
+  const traceResult = await nodeFileTrace([...allInput], nftOptions);
 
   await opts?.hooks?.traceResult?.(traceResult);
 
   // Resolve traced files
-  const _resolveTracedPath = async (p: string) => {
-    try {
-      return normalize(await fsp.realpath(resolve(opts.nft?.base || "/", p)));
-    } catch (error: any) {
-      if (error?.code === "ENOENT") {
-        return;
-      }
-      throw error;
-    }
-  };
-
-  const tracedFiles: Record<string, TracedFile> = Object.fromEntries(
-    (await Promise.all(
-      [...traceResult.reasons.entries()].map(async ([_path, reasons]) => {
-        if (reasons.ignored) {
-          return;
-        }
-        const path = await _resolveTracedPath(_path);
-        if (!path?.includes("node_modules")) {
-          return;
-        }
-        if (!(await isFile(path))) {
-          return;
-        }
-        const { dir: baseDir, name: pkgName, subpath } = parseNodeModulePath(path);
-        if (!baseDir || !pkgName) {
-          return;
-        }
-        const pkgPath = join(baseDir, pkgName);
-        const parents = (
-          await Promise.all([...reasons.parents].map((p) => _resolveTracedPath(p)))
-        ).filter((p): p is string => p !== undefined);
-        const tracedFile = <TracedFile>{
-          path,
-          parents,
-          subpath,
-          pkgName,
-          pkgPath,
-        };
-        return [path, tracedFile];
-      }),
-    ).then((r) => r.filter(Boolean))) as [string, TracedFile][],
-  );
+  const tracedFiles = await resolveTracedFiles(traceResult, base);
 
   await opts?.hooks?.tracedFiles?.(tracedFiles);
 
   // Resolve traced packages
   const tracedPackages: Record<string, TracedPackage> = {};
   const pkgCache: Map<string, PackageJson> = new Map();
-  for (const tracedFile of Object.values(tracedFiles)) {
-    // Use `node_modules/{name}` in path as name to support aliases
-    const pkgName = tracedFile.pkgName;
-    let tracedPackage = tracedPackages[pkgName];
-    let pkgJSON = pkgCache.get(tracedFile.pkgPath) as PackageJson;
-    if (!pkgJSON) {
-      pkgJSON = await readJSON(join(tracedFile.pkgPath, "package.json")).catch(() => {
-        return { name: pkgName, version: "0.0.0" };
-      });
-      pkgCache.set(tracedFile.pkgPath, pkgJSON);
-    }
+  // Every file already assigned to a package, so the follow-up transitive trace
+  // for force-included packages (below) does not re-add duplicates.
+  const seenFiles = new Set<string>();
+  await indexTracedFiles(Object.values(tracedFiles), {
+    tracedFiles,
+    tracedPackages,
+    pkgCache,
+    seenFiles,
+    fullTraceInclude: opts.fullTraceInclude,
+  });
 
-    if (!tracedPackage) {
-      tracedPackage = {
-        name: pkgName,
-        versions: {},
-      };
-      tracedPackages[pkgName] = tracedPackage;
-    }
-    let tracedPackageVersion = tracedPackage.versions[pkgJSON.version || "0.0.0"];
-    if (!tracedPackageVersion) {
-      tracedPackageVersion = {
-        path: tracedFile.pkgPath,
-        files: [],
-        pkgJSON,
-      };
-      tracedPackage.versions[pkgJSON.version || "0.0.0"] = tracedPackageVersion;
-
-      const fullTraceEntry = resolveFullTraceEntry(opts.fullTraceInclude, pkgName);
-      if (fullTraceEntry) {
-        if (fullTraceEntry.glob) {
-          if (!fsp.glob) {
-            throw new Error(
-              "`fullTraceInclude` glob requires Node.js >= 22.0.0 (fs.promises.glob)",
-            );
-          }
-          for await (const file of fsp.glob(fullTraceEntry.glob, {
-            cwd: tracedFile.pkgPath,
-            exclude: (name) => name === "node_modules",
-          })) {
-            const fullPath = join(tracedFile.pkgPath, file);
-            if (await isFile(fullPath)) {
-              tracedPackageVersion.files.push(fullPath);
-            }
-          }
-        } else {
-          tracedPackageVersion.files.push(...(await listPkgFiles(tracedFile.pkgPath)));
-        }
-      }
-    }
-    tracedPackageVersion.files.push(tracedFile.path);
-    tracedFile.pkgName = pkgName;
-    if (pkgJSON.version) {
-      tracedFile.pkgVersion = pkgJSON.version;
-    }
-  }
+  // JS files of force-included packages, traced transitively below so their
+  // runtime dependencies get copied too.
+  const transitiveInput: string[] = [];
 
   // Force-trace explicitly requested packages (`traceInclude`) that may not be
   // statically reachable (e.g. native deps loaded dynamically). Each name is
@@ -226,7 +151,32 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
           },
         },
       };
+      // The package's own files are copied wholesale, but nft never followed
+      // their imports — so queue the JS files for a transitive trace (below) to
+      // pull in runtime deps (e.g. `meriyah` for orchestrion). Mark them seen so
+      // that trace doesn't re-add them.
+      for (const file of files) {
+        seenFiles.add(file);
+        if (JS_FILE_RE.test(file)) {
+          transitiveInput.push(file);
+        }
+      }
     }
+  }
+
+  // Follow transitive dependencies of force-included packages. Runs before the
+  // optionalDependencies pass so newly discovered packages get their optional
+  // (native) deps auto-included too. https://github.com/nodejs/orchestrion-js/issues/80
+  if (transitiveInput.length > 0) {
+    const transitiveResult = await nodeFileTrace(transitiveInput, nftOptions);
+    const transitiveFiles = await resolveTracedFiles(transitiveResult, base);
+    await indexTracedFiles(Object.values(transitiveFiles), {
+      tracedFiles,
+      tracedPackages,
+      pkgCache,
+      seenFiles,
+      fullTraceInclude: opts.fullTraceInclude,
+    });
   }
 
   // Auto-detect and full-trace optionalDependencies (e.g. platform-specific native bindings)
@@ -471,6 +421,130 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
         ].sort(([a], [b]) => a!.localeCompare(b!)),
       ),
     });
+  }
+}
+
+async function resolveTracedPath(base: string, p: string) {
+  try {
+    return normalize(await fsp.realpath(resolve(base, p)));
+  } catch (error: any) {
+    if (error?.code === "ENOENT") {
+      return;
+    }
+    throw error;
+  }
+}
+
+/** Turn an nft trace result into a `path -> TracedFile` map (node_modules only). */
+async function resolveTracedFiles(
+  traceResult: Awaited<ReturnType<typeof nodeFileTrace>>,
+  base: string,
+): Promise<Record<string, TracedFile>> {
+  return Object.fromEntries(
+    (await Promise.all(
+      [...traceResult.reasons.entries()].map(async ([_path, reasons]) => {
+        if (reasons.ignored) {
+          return;
+        }
+        const path = await resolveTracedPath(base, _path);
+        if (!path?.includes("node_modules")) {
+          return;
+        }
+        if (!(await isFile(path))) {
+          return;
+        }
+        const { dir: baseDir, name: pkgName, subpath } = parseNodeModulePath(path);
+        if (!baseDir || !pkgName) {
+          return;
+        }
+        const pkgPath = join(baseDir, pkgName);
+        const parents = (
+          await Promise.all([...reasons.parents].map((p) => resolveTracedPath(base, p)))
+        ).filter((p): p is string => p !== undefined);
+        const tracedFile = <TracedFile>{ path, parents, subpath, pkgName, pkgPath };
+        return [path, tracedFile];
+      }),
+    ).then((r) => r.filter(Boolean))) as [string, TracedFile][],
+  );
+}
+
+/**
+ * Group traced files into `tracedPackages` by name/version. Idempotent across
+ * calls via `seenFiles`, so a follow-up transitive trace can merge new files
+ * without re-adding ones already assigned.
+ */
+async function indexTracedFiles(
+  files: TracedFile[],
+  ctx: {
+    tracedFiles: Record<string, TracedFile>;
+    tracedPackages: Record<string, TracedPackage>;
+    pkgCache: Map<string, PackageJson>;
+    seenFiles: Set<string>;
+    fullTraceInclude: ExternalsTraceOptions["fullTraceInclude"];
+  },
+) {
+  const { tracedFiles, tracedPackages, pkgCache, seenFiles, fullTraceInclude } = ctx;
+  for (const tracedFile of files) {
+    if (seenFiles.has(tracedFile.path)) {
+      continue;
+    }
+    seenFiles.add(tracedFile.path);
+    tracedFiles[tracedFile.path] = tracedFile;
+
+    // Use `node_modules/{name}` in path as name to support aliases
+    const pkgName = tracedFile.pkgName;
+    let tracedPackage = tracedPackages[pkgName];
+    let pkgJSON = pkgCache.get(tracedFile.pkgPath) as PackageJson;
+    if (!pkgJSON) {
+      pkgJSON = await readJSON(join(tracedFile.pkgPath, "package.json")).catch(() => {
+        return { name: pkgName, version: "0.0.0" };
+      });
+      pkgCache.set(tracedFile.pkgPath, pkgJSON);
+    }
+
+    if (!tracedPackage) {
+      tracedPackage = {
+        name: pkgName,
+        versions: {},
+      };
+      tracedPackages[pkgName] = tracedPackage;
+    }
+    let tracedPackageVersion = tracedPackage.versions[pkgJSON.version || "0.0.0"];
+    if (!tracedPackageVersion) {
+      tracedPackageVersion = {
+        path: tracedFile.pkgPath,
+        files: [],
+        pkgJSON,
+      };
+      tracedPackage.versions[pkgJSON.version || "0.0.0"] = tracedPackageVersion;
+
+      const fullTraceEntry = resolveFullTraceEntry(fullTraceInclude, pkgName);
+      if (fullTraceEntry) {
+        if (fullTraceEntry.glob) {
+          if (!fsp.glob) {
+            throw new Error(
+              "`fullTraceInclude` glob requires Node.js >= 22.0.0 (fs.promises.glob)",
+            );
+          }
+          for await (const file of fsp.glob(fullTraceEntry.glob, {
+            cwd: tracedFile.pkgPath,
+            exclude: (name) => name === "node_modules",
+          })) {
+            const fullPath = join(tracedFile.pkgPath, file);
+            if (await isFile(fullPath)) {
+              tracedPackageVersion.files.push(fullPath);
+            }
+          }
+        } else {
+          tracedPackageVersion.files.push(...(await listPkgFiles(tracedFile.pkgPath)));
+        }
+      }
+    }
+    tracedPackageVersion.files.push(tracedFile.path);
+    tracedFile.pkgName = pkgName;
+    if (pkgJSON.version) {
+      tracedFile.pkgVersion = pkgJSON.version;
+    }
   }
 }
 

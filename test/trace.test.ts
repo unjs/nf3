@@ -53,6 +53,36 @@ describe("traceNodeModules", () => {
     ).toMatch("# Title");
   });
 
+  // Regression for https://github.com/nodejs/orchestrion-js/issues/80
+  // A package force-included via `traceInclude` (e.g. orchestrion, loaded at
+  // runtime through `node --import` rather than statically imported) is copied
+  // whole, but its runtime dependencies must be followed transitively too —
+  // otherwise the output crashes at runtime with a missing module (e.g. the
+  // `meriyah` parser that orchestrion requires).
+  it("traces transitive dependencies of a traceInclude package", async () => {
+    const rootDir = fileURLToPath(new URL("fixture", import.meta.url));
+    const input = fileURLToPath(new URL("fixture/force-include.mjs", import.meta.url));
+    const outDir = fileURLToPath(new URL("dist/force-include", import.meta.url));
+
+    await rm(outDir, { recursive: true, force: true });
+    await mkdir(outDir, { recursive: true });
+    await cp(input, `${outDir}/force-include.mjs`);
+
+    await traceNodeModules([input], {
+      rootDir,
+      outDir,
+      traceInclude: ["@fixture/force-included"],
+    });
+
+    const scope = path.join(outDir, "node_modules", "@fixture");
+    // The force-included package itself is copied...
+    await expect(stat(path.join(scope, "force-included", "index.mjs"))).resolves.toBeTruthy();
+    // ...along with its direct runtime dependency...
+    await expect(stat(path.join(scope, "transitive-a", "index.mjs"))).resolves.toBeTruthy();
+    // ...and the transitive-of-transitive dependency.
+    await expect(stat(path.join(scope, "transitive-b", "index.mjs"))).resolves.toBeTruthy();
+  });
+
   // Regression for https://github.com/unjs/nf3/issues/47
   // `@fixture/native-libvips` mirrors `@img/sharp-libvips-*`: it is declared only
   // as an `optionalDependency` (loaded at runtime via native `@rpath` links, with
