@@ -34,7 +34,11 @@ export default defineBuildConfig({
                   "webidl-conversions", "whatwg-url", "yallist" , "rollup", "typescript"
                 ];
                 for (const name of Object.keys(pkgs)) {
-                  if (ignorePkgs.includes(name) || name.startsWith("@rollup/rollup-")) {
+                  if (
+                    ignorePkgs.includes(name) ||
+                    name.startsWith("@rollup/rollup-") ||
+                    name.startsWith("@typescript/typescript-")
+                  ) {
                     delete pkgs[name];
                   }
                 }
