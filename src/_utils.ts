@@ -19,6 +19,15 @@ export function parseNodeModulePath(path: string): {
 
 const IMPORT_RE = /^(?!\.)(?<name>[^@/\\]+|@[^/\\]+[/\\][^/\\]+)(?:[/\\](?<subpath>.+))?$/;
 
+/**
+ * Package name of a bare import specifier, dropping any subpath — the same
+ * name/subpath split `parseNodeModulePath` applies to absolute paths, including
+ * scoped `@scope/pkg/sub`. Returns `undefined` for relative/absolute ids.
+ */
+export function importPkgName(id: string): string | undefined {
+  return IMPORT_RE.exec(id)?.groups?.name;
+}
+
 export function toImport(id: string): string | undefined {
   if (isAbsolute(id)) {
     const { name, subpath } = parseNodeModulePath(id) || {};
