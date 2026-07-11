@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.3.22
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.21...v0.3.22)
+
+### 🩹 Fixes
+
+- **trace:** Resolve `traceInclude` subpath entries and warn on unresolvable ones ([#60](https://github.com/unjs/nf3/pull/60), [#61](https://github.com/unjs/nf3/pull/61))
+
+### 📦 Build
+
+- Strip @typescript/typescript-* native binaries from self-trace ([3a0575d](https://github.com/unjs/nf3/commit/3a0575d))
+
+### 🏡 Chore
+
+- Update deps ([fc0299e](https://github.com/unjs/nf3/commit/fc0299e))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+- Pi0x <x@pi0.io>
+
 ## v0.3.21
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.20...v0.3.21)
