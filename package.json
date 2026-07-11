@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "@types/node": "^26.1.0",
+    "@types/node": "^26.1.1",
     "@types/semver": "^7.7.1",
     "@typescript/native-preview": "latest",
     "@vercel/nft": "^1.10.2",
@@ -39,8 +39,8 @@
     "exsolve": "^1.1.0",
     "obuild": "^0.4.37",
     "oxc-minify": "^0.139.0",
-    "oxfmt": "^0.57.0",
-    "oxlint": "^1.72.0",
+    "oxfmt": "^0.58.0",
+    "oxlint": "^1.73.0",
     "pathe": "^2.0.3",
     "pkg-types": "^2.3.1",
     "rolldown": "^1.1.4",
@@ -50,5 +50,5 @@
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
   },
-  "packageManager": "pnpm@11.9.0"
+  "packageManager": "pnpm@11.10.0"
 }
