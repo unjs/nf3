@@ -4,3 +4,6 @@ allowBuilds:
 ignoredBuiltDependencies:
   - "@parcel/watcher"
   - esbuild
+minimumReleaseAgeExclude:
+  - obuild*
+  - "@vercel/nft*"
