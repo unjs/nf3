@@ -4,6 +4,7 @@ import { dirname, isAbsolute, join, normalize, relative, resolve } from "pathe";
 import semver from "semver";
 import { resolveModulePath } from "exsolve";
 import {
+  importPkgName,
   isWindows,
   parseNodeModulePath,
   readJSON,
@@ -92,7 +93,16 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
   // Driving this off declared dependencies (instead of trying every name against
   // every root) keeps it cheap even when a large allowlist is passed.
   // https://github.com/unjs/nf3/issues/49
-  const traceIncludeSet = new Set((opts.traceInclude || []).filter((n) => !isAbsolute(n)));
+  // Normalize non-absolute entries to their bare package name: entries are
+  // matched against declared dependency *names*, so a subpath entry like
+  // `sharp/wasm` (the exact import specifier that failed to resolve — a natural
+  // thing to pass) would otherwise never match a declarer and be silently
+  // dropped under pnpm's non-hoisted layout. Whole-package copy is the
+  // established semantics, so collapsing the subpath matches intent.
+  // https://github.com/unjs/nf3/issues/60
+  const traceIncludeSet = new Set(
+    (opts.traceInclude || []).filter((n) => !isAbsolute(n)).map((n) => importPkgName(n) || n),
+  );
   if (traceIncludeSet.size > 0) {
     // Collect the roots of traced packages that declare each requested name.
     const declarerRoots = new Map<string, Set<string>>(
@@ -149,26 +159,39 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
       // dependent actually uses (correct version, and pnpm's non-hoisted nested
       // location). `rootDir` is only a fallback — otherwise an unrelated copy
       // hoisted at the root could shadow the dependent's real dependency.
-      let resolved: string | undefined;
+      let depPath: string | undefined;
       for (const from of [...roots, rootDir]) {
         // Resolve the bare name (then derive the package root below). Resolving
         // `<name>/package.json` directly is unreliable since a package's
         // `exports` map usually does not expose it.
-        resolved =
+        const resolved =
           resolveModulePath(name, { try: true, from, conditions: includeConditions }) ||
           resolveModulePath(name + "/package.json", { try: true, from });
         if (resolved) {
+          const { dir, name: resolvedName } = parseNodeModulePath(resolved);
+          if (dir && resolvedName) {
+            depPath = join(dir, resolvedName);
+            break;
+          }
+        }
+        // Fall back to locating the package directory on disk. Covers packages
+        // whose `exports` map omits both `.` and `./package.json` (e.g. the
+        // `native-libvips` shape), which the resolver above cannot find — the
+        // same disk-walk fallback used for optionalDependencies below.
+        depPath = await resolvePackageDir(name, from);
+        if (depPath) {
           break;
         }
       }
-      if (!resolved) {
+      if (!depPath) {
+        // An explicit `traceInclude` entry that resolves from no root is a
+        // "this must be in the output" instruction gone unhonored — warn rather
+        // than turn a build-time problem into a silent production runtime crash.
+        console.warn(
+          `nf3: could not resolve \`traceInclude\` entry ${JSON.stringify(name)} from any root`,
+        );
         continue;
       }
-      const { dir, name: resolvedName } = parseNodeModulePath(resolved);
-      if (!dir || !resolvedName) {
-        continue;
-      }
-      const depPath = join(dir, resolvedName);
       const depPkgJSON = await readJSON(join(depPath, "package.json")).catch(() => null);
       if (!depPkgJSON) {
         continue;

@@ -171,6 +171,39 @@ describe("traceNodeModules", () => {
     await expect(stat(path.join(scope, "conditional-dep", "index.mjs"))).resolves.toBeTruthy();
   });
 
+  // Regression for https://github.com/unjs/nf3/issues/60
+  // A `traceInclude` entry carrying a subpath (e.g. `@fixture/subpath-native/sub`
+  // — the exact specifier that failed to resolve) must trace the whole package.
+  // Here `@fixture/subpath-native` is declared only by `@fixture/subpath-framework`
+  // (bundled, passed via `traceIncludeRoots`) and nested under it rather than
+  // hoisted to the app root — mirroring pnpm's non-hoisted layout. Previously the
+  // subpath entry was compared against bare dependency names, never matched the
+  // declarer, and — unresolvable from `rootDir` — was silently dropped, leaving the
+  // package out of the output. It must now normalize to its package name and match.
+  // The package also ships a restrictive `exports` map (only `./sub`, no `.` nor
+  // `./package.json`) like real native deps, so it is located via the disk walk.
+  it("traces a traceInclude entry that carries a subpath", async () => {
+    const rootDir = fileURLToPath(new URL("fixture", import.meta.url));
+    const input = fileURLToPath(new URL("fixture/subpath.mjs", import.meta.url));
+    const outDir = fileURLToPath(new URL("dist/subpath", import.meta.url));
+
+    await rm(outDir, { recursive: true, force: true });
+    await mkdir(outDir, { recursive: true });
+    await cp(input, `${outDir}/subpath.mjs`);
+
+    await traceNodeModules([input], {
+      rootDir,
+      outDir,
+      traceIncludeRoots: ["node_modules/@fixture/subpath-framework"],
+      traceInclude: ["@fixture/subpath-native/sub"],
+    });
+
+    // The whole package is copied even though only its subpath was requested.
+    const nativeDir = path.join(outDir, "node_modules", "@fixture", "subpath-native");
+    await expect(stat(path.join(nativeDir, "index.mjs"))).resolves.toBeTruthy();
+    await expect(stat(path.join(nativeDir, "sub.mjs"))).resolves.toBeTruthy();
+  });
+
   // Regression for https://github.com/unjs/nf3/issues/47
   // `@fixture/native-libvips` mirrors `@img/sharp-libvips-*`: it is declared only
   // as an `optionalDependency` (loaded at runtime via native `@rpath` links, with
