@@ -74,7 +74,7 @@ export function externals(opts: ExternalsPluginOptions): Plugin {
           if (!filter(cjsResolved.id)) {
             return resolved; // Bundled and wrapped by CJS plugin
           }
-          resolved = cjsResolved /* non-wrapped */;
+          resolved = cjsResolved; /* non-wrapped */
         }
 
         // Check if not resolved or explicitly marked as excluded
