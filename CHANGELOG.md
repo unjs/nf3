@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.3.23
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.22...v0.3.23)
+
+### 🩹 Fixes
+
+- **trace:** Resolve package import wildcard trailers ([#66](https://github.com/unjs/nf3/pull/66))
+
+### 🏡 Chore
+
+- Update deps ([e90005a](https://github.com/unjs/nf3/commit/e90005a))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+- Colton Padden ([@cmpadden](https://github.com/cmpadden))
+
 ## v0.3.22
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.21...v0.3.22)
