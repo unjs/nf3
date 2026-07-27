@@ -21,7 +21,7 @@ export type { ExternalsTraceOptions } from "./types.ts";
 // `@vercel/nft` is CommonJS and gets minified when bundled into dist; a named
 // `import { nodeFileTrace }` relies on Node's cjs-module-lexer detecting the
 // export from minified text, which fails on older Node versions (see #52).
-const { nodeFileTrace } = nft;
+const { nodeFileTrace, resolve: nftResolve } = nft;
 
 export const DEFAULT_CONDITIONS = ["node", "import", "default"];
 
@@ -58,6 +58,35 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
     ),
     ...opts.nft,
     base,
+  };
+
+  // nft's `exports`/`imports` wildcard matching only handles keys that *end* in
+  // `*`, so pattern keys with a trailer (`"#*.js": "./runtime/*.js"`) never match
+  // and the target is silently left out of the output. Rather than patching nft,
+  // fall back to exsolve — which implements the Node resolution algorithm — for
+  // anything nft fails on. Purely additive: nft stays the primary resolver, so
+  // this only ever turns a "Failed to resolve dependency" warning into a
+  // resolved file, and becomes a no-op once nft fixes its matching upstream.
+  // https://github.com/unjs/nf3/pull/66
+  nftOptions.resolve ??= async (id, parent, job, cjsResolve) => {
+    try {
+      return await nftResolve(id, parent, job, cjsResolve);
+    } catch (error) {
+      // nft derives `import`/`require` from the resolution mode instead of
+      // keeping them in `conditions` (both treat `default` as always matching),
+      // so re-add the one that applies here.
+      const resolved = resolveModulePath(id, {
+        from: parent,
+        conditions: [...(nftOptions.conditions || []), cjsResolve ? "require" : "import"],
+        try: true,
+      });
+      if (!resolved) {
+        throw error;
+      }
+      // Match nft's own resolver, which realpaths results so symlinked (pnpm)
+      // layouts collapse to one instance and the link itself gets emitted.
+      return job.realpath(resolved, parent);
+    }
   };
 
   // Trace used files using nft
