@@ -1,1 +1,1 @@
-export { marker as default } from "@fixture/imports-wildcard";
+export { marker as default, extraUtils } from "@fixture/imports-wildcard";

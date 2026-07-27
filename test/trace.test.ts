@@ -37,7 +37,7 @@ describe("traceNodeModules", () => {
     expect(hooks.tracedPackages).toHaveBeenCalledOnce();
   });
 
-  it("traces package imports with wildcard trailers", async () => {
+  it("traces package imports with wildcard trailers and external targets", async () => {
     const input = fileURLToPath(new URL("fixture/package-imports.mjs", import.meta.url));
     const outDir = fileURLToPath(new URL("dist/package-imports", import.meta.url));
 
@@ -60,8 +60,14 @@ describe("traceNodeModules", () => {
         ),
       ),
     ).resolves.toBeTruthy();
+    // `"#utils/*": "@fixture/nitro-utils/*"` — a wildcard import resolving to
+    // another package, so the dependency has to be traced and copied too.
+    await expect(
+      stat(path.join(outDir, "node_modules", "@fixture", "nitro-utils", "extra.mjs")),
+    ).resolves.toBeTruthy();
     await expect(import(`${outDir}/package-imports.mjs`)).resolves.toMatchObject({
       default: "package-imports-wildcard",
+      extraUtils: "@fixture/nitro-utils/extra",
     });
   });
 

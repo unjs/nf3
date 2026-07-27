@@ -7,5 +7,4 @@ ignoredBuiltDependencies:
 minimumReleaseAgeExclude:
   - obuild*
   - "@vercel/nft*"
-patchedDependencies:
-  "@vercel/nft@1.10.2": patches/@vercel__nft@1.10.2.patch
+  - exsolve*
