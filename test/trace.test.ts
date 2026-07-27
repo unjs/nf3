@@ -37,6 +37,34 @@ describe("traceNodeModules", () => {
     expect(hooks.tracedPackages).toHaveBeenCalledOnce();
   });
 
+  it("traces package imports with wildcard trailers", async () => {
+    const input = fileURLToPath(new URL("fixture/package-imports.mjs", import.meta.url));
+    const outDir = fileURLToPath(new URL("dist/package-imports", import.meta.url));
+
+    await rm(outDir, { recursive: true, force: true });
+    await mkdir(outDir, { recursive: true });
+    await cp(input, `${outDir}/package-imports.mjs`);
+
+    await traceNodeModules([input], { outDir });
+
+    await expect(
+      stat(
+        path.join(
+          outDir,
+          "node_modules",
+          "@fixture",
+          "imports-wildcard",
+          "runtime",
+          "internal",
+          "marker.js",
+        ),
+      ),
+    ).resolves.toBeTruthy();
+    await expect(import(`${outDir}/package-imports.mjs`)).resolves.toMatchObject({
+      default: "package-imports-wildcard",
+    });
+  });
+
   it("traceNodeModules with fullTraceInclude", async () => {
     const input = fileURLToPath(new URL("fixture/index.mjs", import.meta.url));
     const outDir = fileURLToPath(new URL("dist/trace", import.meta.url));

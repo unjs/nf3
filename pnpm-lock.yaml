@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@vercel/nft@1.10.2': e83d2a31db976f99212484cc8504dd4ae0cebb89d7f6df7a0f56575f834ae611
+
 importers:
 
   .:
@@ -19,7 +22,7 @@ importers:
         version: 7.7.1
       '@vercel/nft':
         specifier: ^1.10.2
-        version: 1.10.2(rollup@4.62.2)
+        version: 1.10.2(patch_hash=e83d2a31db976f99212484cc8504dd4ae0cebb89d7f6df7a0f56575f834ae611)(rollup@4.62.2)
       '@vitest/coverage-v8':
         specifier: ^4.1.10
         version: 4.1.10(vitest@4.1.10)
@@ -3505,7 +3508,7 @@ snapshots:
   '@typescript/typescript-win32-x64@7.0.2':
     optional: true
 
-  '@vercel/nft@1.10.2(rollup@4.62.2)':
+  '@vercel/nft@1.10.2(patch_hash=e83d2a31db976f99212484cc8504dd4ae0cebb89d7f6df7a0f56575f834ae611)(rollup@4.62.2)':
     dependencies:
       '@mapbox/node-pre-gyp': 2.0.3
       '@rollup/pluginutils': 5.4.0(rollup@4.62.2)
