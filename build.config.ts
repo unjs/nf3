@@ -37,6 +37,7 @@ export default defineBuildConfig({
                   if (
                     ignorePkgs.includes(name) ||
                     name.startsWith("@rollup/rollup-") ||
+                    name.startsWith("@napi-rs/") ||
                     name.startsWith("@typescript/typescript-")
                   ) {
                     delete pkgs[name];
