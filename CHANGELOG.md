@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.24
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.23...v0.3.24)
+
+### 🚀 Enhancements
+
+- Update dependencies ([9391ed2](https://github.com/unjs/nf3/commit/9391ed2))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.23
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.22...v0.3.23)
