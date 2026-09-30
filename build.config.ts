@@ -22,6 +22,9 @@ export default defineBuildConfig({
       (config.plugins as Plugin[]).push(patchLibs());
     },
     async end() {
+      // obuild groups lib chunks by `/node_modules/` paths, so on Windows (`\`) they merge
+      // into a single `libs/common` chunk; releases are never built on Windows
+      if (process.platform === "win32") return;
       const fs = await import("node:fs");
       const path = await import("node:path");
       const expected = { bytes: 396_000, files: 19 };
