@@ -106,7 +106,7 @@ bun scripts/trace.ts sharp               # Trace and verify specific packages
 bun scripts/analyze.ts my-new-package    # Works for packages not in the built-in list too
 ```
 
-**Build:** Uses `obuild` (Rolldown-based). Config in `build.config.ts` — bundles three entry points with all dependencies inlined (patching CJS-only constructs in `@vercel/nft`), minifies `_chunks/libs/` with `oxc-minify`.
+**Build:** Uses `obuild` (Rolldown-based). Config in `build.config.ts` — bundles three entry points with all dependencies inlined, minifies `_chunks/libs/` with `oxc-minify`. `build/patch-libs.ts` patches bundled deps (ESM-incompatible code in `@vercel/nft`, `glob` → `tinyglobby`, `@mapbox/node-pre-gyp` trimmed to `find()`, `semver` subpaths) using shims in `build/shims/`; each patch fails the build if it stops matching.
 
 **Testing:** Vitest with fixtures in `test/fixture/`. Fixtures include multi-version scoped packages for testing dedup/symlink logic.
 

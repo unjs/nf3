@@ -1,6 +1,8 @@
 import { defineBuildConfig } from "obuild/config";
 import { minifySync } from "oxc-minify";
 
+import { patchLibs } from "./build/patch-libs.ts";
+
 import type { Plugin } from "rollup";
 
 export default defineBuildConfig({
@@ -17,35 +19,22 @@ export default defineBuildConfig({
   hooks: {
     rolldownConfig: (config) => {
       config.plugins ??= [];
-      (config.plugins as Plugin[]).push(
-        {
-          // Patch CJS-only constructs in bundled dependencies
-          name: "patch-libs",
-          transform(code, id) {
-            // @vercel/nft nbind locator uses `eval('require.resolve(...)')` to hide
-            // `require` from bundlers, but `require` is not in scope in ESM output
-            if (/[/\\]@vercel[/\\]nft[/\\]out[/\\]utils[/\\]binary-locators\.js$/.test(id)) {
-              return code.replace(/eval\('require\.resolve\((\w+)\)'\)/g, "require.resolve($1)");
+      (config.plugins as Plugin[]).push(patchLibs(), {
+        // Runs after rolldown's own "dce-only" minify pass (which reprints renderChunk output)
+        name: "min-libs",
+        generateBundle(_, bundle) {
+          for (const chunk of Object.values(bundle)) {
+            if (chunk.type === "chunk" && chunk.fileName.startsWith("_chunks/libs/")) {
+              chunk.code = minifySync(chunk.fileName, chunk.code, {}).code;
             }
-          },
+          }
         },
-        {
-          // Runs after rolldown's own "dce-only" minify pass (which reprints renderChunk output)
-          name: "min-libs",
-          generateBundle(_, bundle) {
-            for (const chunk of Object.values(bundle)) {
-              if (chunk.type === "chunk" && chunk.fileName.startsWith("_chunks/libs/")) {
-                chunk.code = minifySync(chunk.fileName, chunk.code, {}).code;
-              }
-            }
-          },
-        },
-      );
+      });
     },
     async end() {
       const fs = await import("node:fs");
       const path = await import("node:path");
-      const expected = { bytes: 530_000, files: 18 };
+      const expected = { bytes: 385_000, files: 19 };
       const tolerance = 0.05;
       let totalBytes = 0;
       let totalFiles = 0;

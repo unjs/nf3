@@ -1,7 +1,7 @@
 import * as fsp from "node:fs/promises";
 import nft from "@vercel/nft";
 import { dirname, isAbsolute, join, normalize, relative, resolve } from "pathe";
-import semver from "semver";
+import semverLt from "semver/functions/lt.js";
 import { resolveModulePath } from "exsolve";
 import {
   importPkgName,
@@ -782,7 +782,7 @@ function createLimiter(concurrency: number) {
 
 function compareVersions(v1 = "0.0.0", v2 = "0.0.0") {
   try {
-    return semver.lt(v1, v2, { loose: true }) ? 1 : -1;
+    return semverLt(v1, v2, { loose: true }) ? 1 : -1;
   } catch {
     return v1.localeCompare(v2);
   }
