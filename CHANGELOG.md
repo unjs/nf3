@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.4.0
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.3.24...v0.4.0)
+
+### 📦 Build
+
+- ⚠️  Bundle deps ([0d93394](https://github.com/unjs/nf3/commit/0d93394))
+- Shim extra deps ([79597b8](https://github.com/unjs/nf3/commit/79597b8))
+- Use obuild minifyLibs ([8688cf9](https://github.com/unjs/nf3/commit/8688cf9))
+
+### 🏡 Chore
+
+- Update dpes ([4778f20](https://github.com/unjs/nf3/commit/4778f20))
+
+#### ⚠️ Breaking Changes
+
+- ⚠️  Bundle deps ([0d93394](https://github.com/unjs/nf3/commit/0d93394))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.3.24
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.23...v0.3.24)
