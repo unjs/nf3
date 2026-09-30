@@ -1,5 +1,4 @@
 import { defineBuildConfig } from "obuild/config";
-import { minifySync } from "oxc-minify";
 
 import { patchLibs } from "./build/patch-libs.ts";
 
@@ -10,6 +9,7 @@ export default defineBuildConfig({
     {
       type: "bundle",
       input: ["src/index.ts", "src/plugin.ts", "src/db.ts"],
+      minifyLibs: true,
       rolldown: {
         // Only used for types (`import type { Plugin } from "rollup"`)
         external: ["rollup"],
@@ -19,22 +19,12 @@ export default defineBuildConfig({
   hooks: {
     rolldownConfig: (config) => {
       config.plugins ??= [];
-      (config.plugins as Plugin[]).push(patchLibs(), {
-        // Runs after rolldown's own "dce-only" minify pass (which reprints renderChunk output)
-        name: "min-libs",
-        generateBundle(_, bundle) {
-          for (const chunk of Object.values(bundle)) {
-            if (chunk.type === "chunk" && chunk.fileName.startsWith("_chunks/libs/")) {
-              chunk.code = minifySync(chunk.fileName, chunk.code, {}).code;
-            }
-          }
-        },
-      });
+      (config.plugins as Plugin[]).push(patchLibs());
     },
     async end() {
       const fs = await import("node:fs");
       const path = await import("node:path");
-      const expected = { bytes: 385_000, files: 19 };
+      const expected = { bytes: 396_000, files: 19 };
       const tolerance = 0.05;
       let totalBytes = 0;
       let totalFiles = 0;
