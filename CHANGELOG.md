@@ -6,7 +6,7 @@
 
 ### 📦 Build
 
-- ⚠️  Bundle deps ([0d93394](https://github.com/unjs/nf3/commit/0d93394))
+- ⚠️ Bundle deps ([0d93394](https://github.com/unjs/nf3/commit/0d93394))
 - Shim extra deps ([79597b8](https://github.com/unjs/nf3/commit/79597b8))
 - Use obuild minifyLibs ([8688cf9](https://github.com/unjs/nf3/commit/8688cf9))
 
@@ -16,7 +16,7 @@
 
 #### ⚠️ Breaking Changes
 
-- ⚠️  Bundle deps ([0d93394](https://github.com/unjs/nf3/commit/0d93394))
+- ⚠️ Bundle deps ([0d93394](https://github.com/unjs/nf3/commit/0d93394))
 
 ### ❤️ Contributors
 
