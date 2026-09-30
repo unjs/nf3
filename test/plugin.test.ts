@@ -23,7 +23,14 @@ describe("plugin", () => {
       input,
       output: { format: "esm" },
       external: [...builtinModules, ...builtinModules.map((m) => `node:${m}`)],
-      plugins: [externals({ rootDir: pkgDir }), nodeResolve({}), esbuild()],
+      plugins: [
+        externals({
+          rootDir: pkgDir,
+          trace: { outDir: fileURLToPath(new URL("dist/rollup", import.meta.url)) },
+        }),
+        nodeResolve({}),
+        esbuild(),
+      ],
     });
     await out.write({
       dir: fileURLToPath(new URL("dist/rollup", import.meta.url)),
@@ -43,7 +50,12 @@ describe("plugin", () => {
         format: "esm",
       },
       external: [...builtinModules, ...builtinModules.map((m) => `node:${m}`)],
-      plugins: [externals({ rootDir: pkgDir })],
+      plugins: [
+        externals({
+          rootDir: pkgDir,
+          trace: { outDir: fileURLToPath(new URL("dist/rolldown", import.meta.url)) },
+        }),
+      ],
     });
   });
 });

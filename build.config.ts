@@ -1,8 +1,6 @@
 import { defineBuildConfig } from "obuild/config";
 import { minifySync } from "oxc-minify";
 
-import { externals } from "./src/plugin.ts";
-
 import type { Plugin } from "rollup";
 
 export default defineBuildConfig({
@@ -10,60 +8,35 @@ export default defineBuildConfig({
     {
       type: "bundle",
       input: ["src/index.ts", "src/plugin.ts", "src/db.ts"],
+      rolldown: {
+        // Only used for types (`import type { Plugin } from "rollup"`)
+        external: ["rollup"],
+      },
     },
   ],
   hooks: {
     rolldownConfig: (config) => {
       config.plugins ??= [];
       (config.plugins as Plugin[]).push(
-        externals({
-          exclude: [/pkg-types|confbox|exsolve|pathe/],
-          trace: {
-            transform: [
-              {
-                filter: (id) => /\.[mc]?js$/.test(id),
-                handler: (code, id) => minifySync(id, code, {}).code,
-              },
-            ],
-            hooks: {
-              tracedPackages(pkgs) {
-                // prettier-ignore
-                const ignorePkgs = [
-                  "agent-base", "chownr", "debug", "fsevents", "has-flag", "https-proxy-agent",
-                  "minizlib", "ms", "node-fetch", "supports-color", "tar", "tr46",
-                  "webidl-conversions", "whatwg-url", "yallist" , "rollup", "typescript"
-                ];
-                for (const name of Object.keys(pkgs)) {
-                  if (
-                    ignorePkgs.includes(name) ||
-                    name.startsWith("@rollup/rollup-") ||
-                    name.startsWith("@napi-rs/") ||
-                    name.startsWith("@typescript/typescript-")
-                  ) {
-                    delete pkgs[name];
-                  }
-                }
-                // prettier-ignore
-                const essentialFields = new Set([
-                  "name", "version", "type",
-                  "main", "exports", "imports"
-                ]);
-                for (const pkgGroup of Object.values(pkgs)) {
-                  for (const pkg of Object.values(pkgGroup.versions)) {
-                    pkg.pkgJSON = Object.fromEntries(
-                      Object.entries(pkg.pkgJSON).filter(([key]) => essentialFields.has(key)),
-                    );
-                  }
-                }
-              },
-            },
-          },
-        }),
         {
+          // Patch CJS-only constructs in bundled dependencies
+          name: "patch-libs",
+          transform(code, id) {
+            // @vercel/nft nbind locator uses `eval('require.resolve(...)')` to hide
+            // `require` from bundlers, but `require` is not in scope in ESM output
+            if (/[/\\]@vercel[/\\]nft[/\\]out[/\\]utils[/\\]binary-locators\.js$/.test(id)) {
+              return code.replace(/eval\('require\.resolve\((\w+)\)'\)/g, "require.resolve($1)");
+            }
+          },
+        },
+        {
+          // Runs after rolldown's own "dce-only" minify pass (which reprints renderChunk output)
           name: "min-libs",
-          renderChunk(code, chunk) {
-            if (chunk.fileName.startsWith("_chunks/libs/")) {
-              return minifySync(chunk.fileName, code, {});
+          generateBundle(_, bundle) {
+            for (const chunk of Object.values(bundle)) {
+              if (chunk.type === "chunk" && chunk.fileName.startsWith("_chunks/libs/")) {
+                chunk.code = minifySync(chunk.fileName, chunk.code, {}).code;
+              }
             }
           },
         },
@@ -72,7 +45,7 @@ export default defineBuildConfig({
     async end() {
       const fs = await import("node:fs");
       const path = await import("node:path");
-      const expected = { bytes: 550_000, files: 155 };
+      const expected = { bytes: 530_000, files: 18 };
       const tolerance = 0.05;
       let totalBytes = 0;
       let totalFiles = 0;
