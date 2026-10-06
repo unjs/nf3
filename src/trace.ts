@@ -491,14 +491,17 @@ export async function traceNodeModules(
     }
   };
 
-  const linkPackage = async (from: string, to: string) => {
+  const linkPackage = async (from: string, to: string, replace?: boolean) => {
     const src = join(outDir, from);
     const dst = join(outDir, to);
     const dstStat = await fsp.lstat(dst).catch(() => null);
     const exists = dstStat?.isSymbolicLink();
     // console.log("Linking", from, "to", to, exists ? "!!!!" : "");
     if (exists) {
-      return;
+      if (!replace) {
+        return;
+      }
+      await fsp.unlink(dst);
     }
     await fsp.mkdir(dirname(dst), { recursive: true });
     await fsp
@@ -591,8 +594,12 @@ export async function traceNodeModules(
       // The version Node.js resolves from `rootDir` is what bundled root-level
       // code expects behind the bare specifier (versions only imported by
       // bundled code have no traced parents to break the tie otherwise).
+      // Compared by version (not path) since the same version can be installed
+      // in several places, and only one of them is recorded.
       const rootPkgDir = await resolvePackageDir(pkgName, rootDir);
-      const rootPath = rootPkgDir && (await realPkgPath(rootPkgDir));
+      const rootVersion =
+        rootPkgDir &&
+        ((await readJSON(join(rootPkgDir, "package.json")).catch(() => null))?.version || "0.0.0");
       const versionEntries = Object.entries(pkgVersions).sort(([v1, p1], [v2, p2]) => {
         // 1. Most dependants to be hoisted (0 parents = root-level = most implicit dependants)
         const d1 = p1.length === 0 ? Infinity : p1.length;
@@ -601,8 +608,8 @@ export async function traceNodeModules(
           return d2 - d1;
         }
         // 2. Version resolvable from `rootDir` to be hoisted
-        const r1 = realPaths[v1] === rootPath;
-        const r2 = realPaths[v2] === rootPath;
+        const r1 = v1 === rootVersion;
+        const r2 = v2 === rootVersion;
         if (r1 !== r2) {
           return r1 ? -1 : 1;
         }
@@ -623,11 +630,13 @@ export async function traceNodeModules(
           ]),
         ),
       };
-      for (const [version, parentPkgs] of versionEntries) {
+      for (const [index, [version, parentPkgs]] of versionEntries.entries()) {
         // Write each version into node_modules/.nf3/{name}@{version}
         await writePackage(pkgName, version, `.nf3/${pkgName}@${version}`);
-        // Link one version to the top level (for indirect bundle deps)
-        await linkPackage(`.nf3/${pkgName}@${version}`, `${pkgName}`);
+        // Link one version to the top level (for indirect bundle deps). The
+        // hoisted one replaces any existing link (e.g. stale from a previous
+        // build in the same outDir) so it matches the reported layout.
+        await linkPackage(`.nf3/${pkgName}@${version}`, `${pkgName}`, index === 0);
         // Link to parent packages (distinct targets — safe to run in parallel)
         await Promise.all(
           parentPkgs.map((parentPkg) => {
@@ -664,7 +673,10 @@ export async function traceNodeModules(
   }
 
   // Map input files to their output location
-  const inputPaths = await Promise.all(allInput.map((file) => resolveTracedPath(base, file)));
+  // nft resolves (relative) inputs against `process.cwd()`, not `base`
+  const inputPaths = await Promise.all(
+    allInput.map((file) => resolveTracedPath(process.cwd(), file)),
+  );
   for (const [i, file] of allInput.entries()) {
     const tracedFile = inputPaths[i] && tracedFiles[inputPaths[i]];
     const outPath =

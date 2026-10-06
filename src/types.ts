@@ -165,8 +165,9 @@ export type TracedLayout = {
   /** Output layout of each traced package, keyed by package name. */
   packages: Record<string, TracedPackageLayout>;
   /**
-   * Output path (relative to `outDir`) of each input file that lives in a traced
-   * package, keyed by the input path as passed to `traceNodeModules`.
+   * Output path (relative to `outDir`) of each input file (including absolute
+   * `traceInclude` entries) that lives in a traced package, keyed by the path
+   * exactly as passed. Prefer this over matching against `versions[].path`.
    *
    * @example { "/app/packages/a/node_modules/bcrypt/index.js": "node_modules/.nf3/bcrypt@2.0.0/index.js" }
    */
@@ -180,7 +181,10 @@ export type TracedPackageLayout = {
   versions: Record<
     string,
     {
-      /** Source package directory on disk (realpath). */
+      /**
+       * Source package directory (normalized realpath, forward slashes). If the
+       * same version is installed in several places, only one is reported.
+       */
       path: string;
       /**
        * Output package directory relative to `outDir`, e.g. `node_modules/bcrypt`

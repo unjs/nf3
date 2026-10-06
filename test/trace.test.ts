@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { traceNodeModules } from "../src/index.ts";
 import { fileURLToPath } from "node:url";
-import { cp, lstat, rm, mkdir, readFile, stat } from "node:fs/promises";
+import { cp, lstat, realpath, rm, mkdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { normalize } from "pathe";
 import type { TraceHooks } from "../src/types.ts";
 
 describe("traceNodeModules", () => {
@@ -10,6 +11,7 @@ describe("traceNodeModules", () => {
     const input = fileURLToPath(new URL("fixture/index.mjs", import.meta.url));
     const outDir = fileURLToPath(new URL("dist/trace", import.meta.url));
 
+    await rm(outDir, { recursive: true, force: true });
     await cp(input, `${outDir}/index.mjs`);
 
     const hooks: TraceHooks = {
@@ -93,12 +95,12 @@ describe("traceNodeModules", () => {
       hoisted: "1.0.0",
       versions: {
         "1.0.0": {
-          path: path.dirname(rootInput),
+          path: normalize(await realpath(path.dirname(rootInput))),
           outPath: "node_modules/.nf3/@fixture/hoist-dep@1.0.0",
           hoisted: true,
         },
         "2.0.0": {
-          path: path.dirname(nestedInput),
+          path: normalize(await realpath(path.dirname(nestedInput))),
           outPath: "node_modules/.nf3/@fixture/hoist-dep@2.0.0",
           hoisted: false,
         },
@@ -120,6 +122,32 @@ describe("traceNodeModules", () => {
 
     const pkgJSON = JSON.parse(await readFile(path.join(outDir, "package.json"), "utf8"));
     expect(pkgJSON.dependencies).toEqual({ "@fixture/hoist-dep": "1.0.0" });
+  });
+
+  // Reusing an outDir must not leave a stale top-level link that disagrees with
+  // the reported layout, and relative inputs resolve against cwd (like nft).
+  it("relinks the hoisted version over a stale link", async () => {
+    const rootDir = fileURLToPath(new URL("fixture", import.meta.url));
+    const outDir = fileURLToPath(new URL("dist/hoist-relink", import.meta.url));
+    const rootInput = path.join(rootDir, "node_modules/@fixture/hoist-dep/index.mjs");
+    const nestedDir = path.join(rootDir, "packages/composition");
+    const nestedInput = path.join(nestedDir, "node_modules/@fixture/hoist-dep/index.mjs");
+    const input = [path.relative(process.cwd(), rootInput), nestedInput];
+
+    await rm(outDir, { recursive: true, force: true });
+
+    // From the workspace package, the nested version is the resolvable one
+    const first = await traceNodeModules(input, { rootDir: nestedDir, outDir });
+    expect(first.packages["@fixture/hoist-dep"]!.hoisted).toBe("2.0.0");
+
+    const layout = await traceNodeModules(input, { rootDir, outDir });
+    expect(layout.packages["@fixture/hoist-dep"]!.hoisted).toBe("1.0.0");
+    expect(layout.files[input[0]!]).toBe("node_modules/.nf3/@fixture/hoist-dep@1.0.0/index.mjs");
+    expect(
+      JSON.parse(
+        await readFile(path.join(outDir, "node_modules/@fixture/hoist-dep/package.json"), "utf8"),
+      ).version,
+    ).toBe("1.0.0");
   });
 
   it("traces package imports with wildcard trailers and external targets", async () => {
