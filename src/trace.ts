@@ -14,7 +14,7 @@ import {
 
 import type { NodeFileTraceOptions } from "@vercel/nft";
 import type { PackageJson } from "pkg-types";
-import type { ExternalsTraceOptions, TracedFile, TracedPackage } from "./types.ts";
+import type { ExternalsTraceOptions, TracedFile, TracedLayout, TracedPackage } from "./types.ts";
 export type { ExternalsTraceOptions } from "./types.ts";
 
 // Use the CJS default (whole `module.exports`) rather than a named import.
@@ -31,7 +31,10 @@ const JS_FILE_RE = /\.(?:c|m)?js$/;
 // while still overlapping I/O latency across the many small files we copy.
 const FS_CONCURRENCY = 32;
 
-export async function traceNodeModules(input: string[], opts: ExternalsTraceOptions) {
+export async function traceNodeModules(
+  input: string[],
+  opts: ExternalsTraceOptions,
+): Promise<TracedLayout> {
   const rootDir = resolve(opts.rootDir || ".");
 
   // Absolute `traceInclude` entries are traced directly. Bare package names are
@@ -546,12 +549,28 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
     }
   }
 
+  // Final output layout, reported back to the caller (return value and
+  // `tracedLayout` hook) so it can map each traced version to its output path.
+  const layout: TracedLayout = { packages: {}, files: {} };
+  const realPkgPath = async (path: string) => (await resolveTracedPath(base, path)) || path;
+
   // Directly write single version packages
   await Promise.all(
-    singleVersionPackages.map((pkgName) => {
-      const pkg = tracedPackages[pkgName];
-      const version = Object.keys(pkg!.versions)[0];
-      return writePackage(pkgName, version!);
+    singleVersionPackages.map(async (pkgName) => {
+      const pkg = tracedPackages[pkgName]!;
+      const version = Object.keys(pkg.versions)[0]!;
+      layout.packages[pkgName] = {
+        name: pkgName,
+        hoisted: version,
+        versions: {
+          [version]: {
+            path: await realPkgPath(pkg.versions[version]!.path),
+            outPath: `node_modules/${pkgName}`,
+            hoisted: true,
+          },
+        },
+      };
+      return writePackage(pkgName, version);
     }),
   );
 
@@ -561,6 +580,19 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
   // top-level link before the others see it as taken.
   await Promise.all(
     Object.entries(multiVersionPkgs).map(async ([pkgName, pkgVersions]) => {
+      const pkg = tracedPackages[pkgName]!;
+      const realPaths = Object.fromEntries(
+        await Promise.all(
+          Object.keys(pkgVersions).map(
+            async (v) => [v, await realPkgPath(pkg.versions[v]!.path)] as const,
+          ),
+        ),
+      );
+      // The version Node.js resolves from `rootDir` is what bundled root-level
+      // code expects behind the bare specifier (versions only imported by
+      // bundled code have no traced parents to break the tie otherwise).
+      const rootPkgDir = await resolvePackageDir(pkgName, rootDir);
+      const rootPath = rootPkgDir && (await realPkgPath(rootPkgDir));
       const versionEntries = Object.entries(pkgVersions).sort(([v1, p1], [v2, p2]) => {
         // 1. Most dependants to be hoisted (0 parents = root-level = most implicit dependants)
         const d1 = p1.length === 0 ? Infinity : p1.length;
@@ -568,9 +600,29 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
         if (d1 !== d2) {
           return d2 - d1;
         }
-        // 2. Newest version to be hoisted
+        // 2. Version resolvable from `rootDir` to be hoisted
+        const r1 = realPaths[v1] === rootPath;
+        const r2 = realPaths[v2] === rootPath;
+        if (r1 !== r2) {
+          return r1 ? -1 : 1;
+        }
+        // 3. Newest version to be hoisted
         return compareVersions(v1, v2);
       });
+      layout.packages[pkgName] = {
+        name: pkgName,
+        hoisted: versionEntries[0]![0],
+        versions: Object.fromEntries(
+          versionEntries.map(([version], index) => [
+            version,
+            {
+              path: realPaths[version]!,
+              outPath: `node_modules/.nf3/${pkgName}@${version}`,
+              hoisted: index === 0,
+            },
+          ]),
+        ),
+      };
       for (const [version, parentPkgs] of versionEntries) {
         // Write each version into node_modules/.nf3/{name}@{version}
         await writePackage(pkgName, version, `.nf3/${pkgName}@${version}`);
@@ -604,12 +656,27 @@ export async function traceNodeModules(input: string[], opts: ExternalsTraceOpti
       private: true,
       dependencies: Object.fromEntries(
         [
-          ...Object.values(tracedPackages).map((pkg) => [pkg.name, Object.keys(pkg.versions)[0]]),
+          ...Object.values(layout.packages).map((pkg) => [pkg.name, pkg.hoisted]),
           ...Object.entries(usedAliases),
         ].sort(([a], [b]) => a!.localeCompare(b!)),
       ),
     });
   }
+
+  // Map input files to their output location
+  const inputPaths = await Promise.all(allInput.map((file) => resolveTracedPath(base, file)));
+  for (const [i, file] of allInput.entries()) {
+    const tracedFile = inputPaths[i] && tracedFiles[inputPaths[i]];
+    const outPath =
+      tracedFile && layout.packages[tracedFile.pkgName]?.versions[tracedFile.pkgVersion]?.outPath;
+    if (outPath && tracedFile.subpath) {
+      layout.files[file] = `${outPath}/${tracedFile.subpath}`;
+    }
+  }
+
+  await opts?.hooks?.tracedLayout?.(layout);
+
+  return layout;
 }
 
 async function resolveTracedPath(base: string, p: string) {

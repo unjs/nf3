@@ -86,9 +86,39 @@ rollupNodeFileTrace({
     traceResult: (result) => {},
     tracedFiles: (files) => {},
     tracedPackages: (packages) => {},
+    tracedLayout: (layout) => {},
   },
 });
 ```
+
+### Output Layout
+
+`traceNodeModules` returns the final output layout (also passed to the `tracedLayout` hook). All output paths are relative to `outDir`.
+
+```js
+const layout = await traceNodeModules(
+  ["/app/node_modules/bcrypt/index.js", "/app/packages/a/node_modules/bcrypt/index.js"],
+  { rootDir: "/app", outDir: "dist" },
+);
+
+// layout.packages.bcrypt
+// {
+//   name: "bcrypt",
+//   hoisted: "1.0.0", // version linked at `node_modules/bcrypt`
+//   versions: {
+//     "1.0.0": { path: "/app/node_modules/bcrypt", outPath: "node_modules/.nf3/bcrypt@1.0.0", hoisted: true },
+//     "2.0.0": { path: "/app/packages/a/node_modules/bcrypt", outPath: "node_modules/.nf3/bcrypt@2.0.0", hoisted: false },
+//   },
+// }
+
+// layout.files (input file -> output file)
+// {
+//   "/app/node_modules/bcrypt/index.js": "node_modules/.nf3/bcrypt@1.0.0/index.js",
+//   "/app/packages/a/node_modules/bcrypt/index.js": "node_modules/.nf3/bcrypt@2.0.0/index.js",
+// }
+```
+
+When multiple versions of a package are traced, each is written to `node_modules/.nf3/<name>@<version>` and linked under the `node_modules` of the traced packages that depend on it. One version is linked at `node_modules/<name>`, chosen by (1) most traced dependants, (2) the version Node.js resolves from `rootDir`, then (3) the newest. Versions imported only by bundled code are not reachable through the bare specifier unless hoisted; use `layout.files` to import them by path.
 
 ### Transforming
 

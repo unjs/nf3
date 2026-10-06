@@ -1,0 +1,7 @@
+{
+  "name": "@fixture/composition",
+  "private": true,
+  "dependencies": {
+    "@fixture/hoist-dep": "2.0.0"
+  }
+}
