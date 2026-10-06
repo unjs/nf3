@@ -156,9 +156,52 @@ export type TracedPackage = {
   >;
 };
 
+/**
+ * Final `node_modules` layout written by `traceNodeModules`.
+ *
+ * All output paths are relative to `outDir` and use forward slashes.
+ */
+export type TracedLayout = {
+  /** Output layout of each traced package, keyed by package name. */
+  packages: Record<string, TracedPackageLayout>;
+  /**
+   * Output path (relative to `outDir`) of each input file (including absolute
+   * `traceInclude` entries) that lives in a traced package, keyed by the path
+   * exactly as passed. Prefer this over matching against `versions[].path`.
+   *
+   * @example { "/app/packages/a/node_modules/bcrypt/index.js": "node_modules/.nf3/bcrypt@2.0.0/index.js" }
+   */
+  files: Record<string, string>;
+};
+
+export type TracedPackageLayout = {
+  name: string;
+  /** Version reachable as `node_modules/<name>` (bare specifier). */
+  hoisted: string;
+  versions: Record<
+    string,
+    {
+      /**
+       * Source package directory (normalized realpath, forward slashes). If the
+       * same version is installed in several places, only one is reported.
+       */
+      path: string;
+      /**
+       * Output package directory relative to `outDir`, e.g. `node_modules/bcrypt`
+       * or `node_modules/.nf3/bcrypt@1.0.0` when multiple versions are traced.
+       */
+      outPath: string;
+      /** Whether this version is the one linked at `node_modules/<name>`. */
+      hoisted: boolean;
+    }
+  >;
+};
+
 export interface TraceHooks {
   traceStart?: (files: string[]) => void | Promise<void>;
   traceResult?: (result: NodeFileTraceResult) => void | Promise<void>;
   tracedFiles?: (files: Record<string, TracedFile>) => void | Promise<void>;
   tracedPackages?: (packages: Record<string, TracedPackage>) => void | Promise<void>;
+  /** Called with the final output layout once all packages are written. */
+  tracedLayout?: (layout: TracedLayout) => void | Promise<void>;
 }

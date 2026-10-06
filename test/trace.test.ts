@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { traceNodeModules } from "../src/index.ts";
 import { fileURLToPath } from "node:url";
-import { cp, rm, mkdir, readFile, stat } from "node:fs/promises";
+import { cp, lstat, realpath, rm, mkdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { normalize } from "pathe";
 import type { TraceHooks } from "../src/types.ts";
 
 describe("traceNodeModules", () => {
@@ -10,6 +11,7 @@ describe("traceNodeModules", () => {
     const input = fileURLToPath(new URL("fixture/index.mjs", import.meta.url));
     const outDir = fileURLToPath(new URL("dist/trace", import.meta.url));
 
+    await rm(outDir, { recursive: true, force: true });
     await cp(input, `${outDir}/index.mjs`);
 
     const hooks: TraceHooks = {
@@ -19,7 +21,7 @@ describe("traceNodeModules", () => {
       tracedPackages: vi.fn(),
     };
 
-    await traceNodeModules([input], { outDir, hooks });
+    const layout = await traceNodeModules([input], { outDir, hooks });
 
     const entry = await import(`${outDir}/index.mjs`);
 
@@ -35,6 +37,117 @@ describe("traceNodeModules", () => {
     expect(hooks.traceResult).toHaveBeenCalledOnce();
     expect(hooks.tracedFiles).toHaveBeenCalledOnce();
     expect(hooks.tracedPackages).toHaveBeenCalledOnce();
+
+    // Versions with external parents: the root-level one is hoisted, the others
+    // are linked under their parents' `node_modules`.
+    expect(layout.packages["@fixture/nitro-lib"]).toMatchObject({
+      hoisted: "2.0.0",
+      versions: {
+        "1.0.0": { outPath: "node_modules/.nf3/@fixture/nitro-lib@1.0.0", hoisted: false },
+        "2.0.0": { outPath: "node_modules/.nf3/@fixture/nitro-lib@2.0.0", hoisted: true },
+        "2.0.1": { outPath: "node_modules/.nf3/@fixture/nitro-lib@2.0.1", hoisted: false },
+      },
+    });
+    expect(layout.packages["@fixture/nitro-dep-a"]).toMatchObject({
+      hoisted: "1.0.0",
+      versions: { "1.0.0": { outPath: "node_modules/@fixture/nitro-dep-a", hoisted: true } },
+    });
+    expect(
+      (
+        await lstat(
+          path.join(outDir, "node_modules/@fixture/nitro-dep-a/node_modules/@fixture/nitro-lib"),
+        )
+      ).isSymbolicLink(),
+    ).toBe(true);
+  });
+
+  // https://github.com/nitrojs/nitro/issues/4731
+  // Two versions of a package passed only as direct inputs (imported by bundled
+  // code), so neither has traced parents. The version Node.js resolves from
+  // `rootDir` must be hoisted — regardless of input order — and the returned
+  // layout must tell the caller where the other one went.
+  it.each([
+    ["root first", false],
+    ["root last", true],
+  ])("hoists the rootDir-resolvable version (%s)", async (_, reverse) => {
+    const rootDir = fileURLToPath(new URL("fixture", import.meta.url));
+    const outDir = fileURLToPath(new URL(`dist/hoist-root-${reverse}`, import.meta.url));
+    const rootInput = path.join(rootDir, "node_modules/@fixture/hoist-dep/index.mjs");
+    const nestedInput = path.join(
+      rootDir,
+      "packages/composition/node_modules/@fixture/hoist-dep/index.mjs",
+    );
+    const input = reverse ? [nestedInput, rootInput] : [rootInput, nestedInput];
+
+    await rm(outDir, { recursive: true, force: true });
+
+    const tracedLayout = vi.fn();
+    const layout = await traceNodeModules(input, {
+      rootDir,
+      outDir,
+      writePackageJson: true,
+      hooks: { tracedLayout },
+    });
+
+    expect(tracedLayout).toHaveBeenCalledExactlyOnceWith(layout);
+    expect(layout.packages["@fixture/hoist-dep"]).toEqual({
+      name: "@fixture/hoist-dep",
+      hoisted: "1.0.0",
+      versions: {
+        "1.0.0": {
+          path: normalize(await realpath(path.dirname(rootInput))),
+          outPath: "node_modules/.nf3/@fixture/hoist-dep@1.0.0",
+          hoisted: true,
+        },
+        "2.0.0": {
+          path: normalize(await realpath(path.dirname(nestedInput))),
+          outPath: "node_modules/.nf3/@fixture/hoist-dep@2.0.0",
+          hoisted: false,
+        },
+      },
+    });
+    expect(layout.files).toEqual({
+      [rootInput]: "node_modules/.nf3/@fixture/hoist-dep@1.0.0/index.mjs",
+      [nestedInput]: "node_modules/.nf3/@fixture/hoist-dep@2.0.0/index.mjs",
+    });
+
+    // The bare specifier resolves to the hoisted version...
+    const hoisted = await import(path.join(outDir, "node_modules/@fixture/hoist-dep/index.mjs"));
+    expect(hoisted.default).toBe("@fixture/hoist-dep@1.0.0");
+    // ...and every reported output path exists with the expected version.
+    for (const [file, outPath] of Object.entries(layout.files)) {
+      const mod = await import(path.join(outDir, outPath));
+      expect(mod.default).toBe(file === rootInput ? hoisted.default : "@fixture/hoist-dep@2.0.0");
+    }
+
+    const pkgJSON = JSON.parse(await readFile(path.join(outDir, "package.json"), "utf8"));
+    expect(pkgJSON.dependencies).toEqual({ "@fixture/hoist-dep": "1.0.0" });
+  });
+
+  // Reusing an outDir must not leave a stale top-level link that disagrees with
+  // the reported layout, and relative inputs resolve against cwd (like nft).
+  it("relinks the hoisted version over a stale link", async () => {
+    const rootDir = fileURLToPath(new URL("fixture", import.meta.url));
+    const outDir = fileURLToPath(new URL("dist/hoist-relink", import.meta.url));
+    const rootInput = path.join(rootDir, "node_modules/@fixture/hoist-dep/index.mjs");
+    const nestedDir = path.join(rootDir, "packages/composition");
+    const nestedInput = path.join(nestedDir, "node_modules/@fixture/hoist-dep/index.mjs");
+    const input = [path.relative(process.cwd(), rootInput), nestedInput];
+
+    await rm(outDir, { recursive: true, force: true });
+
+    // From the workspace package, the nested version is the resolvable one
+    const first = await traceNodeModules(input, { rootDir: nestedDir, outDir });
+    expect(first.packages["@fixture/hoist-dep"]!.hoisted).toBe("2.0.0");
+
+    const layout = await traceNodeModules(input, { rootDir, outDir });
+    expect(layout.packages["@fixture/hoist-dep"]!.hoisted).toBe("1.0.0");
+    expect(layout.files[input[0]!]).toBe("node_modules/.nf3/@fixture/hoist-dep@1.0.0/index.mjs");
+    expect(
+      JSON.parse(
+        await readFile(path.join(outDir, "node_modules/@fixture/hoist-dep/package.json"), "utf8"),
+      ).version,
+    ).toBe("1.0.0");
   });
 
   it("traces package imports with wildcard trailers and external targets", async () => {
