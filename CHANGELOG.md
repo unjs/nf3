@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.4.1
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.4.0...v0.4.1)
+
+### 🚀 Enhancements
+
+- Return traced output layout and hoist rootDir-resolvable version ([#76](https://github.com/unjs/nf3/pull/76))
+
+### 🏡 Chore
+
+- Apply automated updates ([1081182](https://github.com/unjs/nf3/commit/1081182))
+- Update deps ([a469372](https://github.com/unjs/nf3/commit/a469372))
+- Update build script ([d0af355](https://github.com/unjs/nf3/commit/d0af355))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+- Pi0x <x@pi0.io>
+
 ## v0.4.0
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.3.24...v0.4.0)
