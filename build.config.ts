@@ -10,6 +10,7 @@ export default defineBuildConfig({
       type: "bundle",
       input: ["src/index.ts", "src/plugin.ts", "src/db.ts"],
       minifyLibs: true,
+      minify: true,
       rolldown: {
         // Only used for types (`import type { Plugin } from "rollup"`)
         external: ["rollup"],
@@ -27,7 +28,7 @@ export default defineBuildConfig({
       if (process.platform === "win32") return;
       const fs = await import("node:fs");
       const path = await import("node:path");
-      const expected = { bytes: 396_000, files: 19 };
+      const expected = { bytes: 350_000, files: 19 };
       const tolerance = 0.05;
       let totalBytes = 0;
       let totalFiles = 0;
