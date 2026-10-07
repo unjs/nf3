@@ -18,6 +18,7 @@ test/
   trace.test.ts      # Tests for traceNodeModules
   plugin.test.ts     # Tests for rollup/rolldown plugin
   condition.test.ts  # Tests for applyProductionCondition
+  dist.test.ts       # Tests against built dist (patched bundled deps; needs `pnpm build`)
   fixture/           # Multi-version package fixtures
 ```
 
