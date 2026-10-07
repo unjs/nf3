@@ -24,6 +24,16 @@ const LIB_PATCHES: Record<string, (code: string) => string> = {
       "(0, glob_1.glob)([$1, wildcardPattern], {",
       2,
     ),
+  // Extensionless assets are analyzed as code, so non-regular files (e.g. a Chromium
+  // `SingletonSocket`) crash `readFile`; emit those as plain assets instead
+  // https://github.com/vercel/nft/issues/616
+  "@vercel/nft/out/node-file-trace.js": (code) =>
+    replaceOrThrow(
+      code,
+      "ext === '' ||",
+      "(ext === '' && (await this.stat(asset))?.isFile()) ||",
+      1,
+    ),
   "@vercel/nft/out/utils/sharedlib-emit.js": (code) =>
     replaceOrThrow(
       code,
