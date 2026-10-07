@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.4.2
+
+[compare changes](https://github.com/unjs/nf3/compare/v0.4.1...v0.4.2)
+
+### 🩹 Fixes
+
+- Skip non-regular extensionless assets in bundled nft ([cb9e170](https://github.com/unjs/nf3/commit/cb9e170))
+
+### 📦 Build
+
+- Reduce dist size ([2d5df47](https://github.com/unjs/nf3/commit/2d5df47))
+
+### 🏡 Chore
+
+- Update lock ([aeb4e49](https://github.com/unjs/nf3/commit/aeb4e49))
+
+### ✅ Tests
+
+- Cover bundled dependency patches against built dist ([2c9d76c](https://github.com/unjs/nf3/commit/2c9d76c))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.4.1
 
 [compare changes](https://github.com/unjs/nf3/compare/v0.4.0...v0.4.1)
