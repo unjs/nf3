@@ -34,6 +34,17 @@ const LIB_PATCHES: Record<string, (code: string) => string> = {
       "(ext === '' && (await this.stat(asset))?.isFile()) ||",
       1,
     ),
+  // nft walks every ancestor dir up to the trace `base` ("/" by default) and calls `readlink` on
+  // it; on restricted hosts an ancestor may not be inspectable (`EACCES` / `EPERM`), which used
+  // to fail the whole trace. Treat it as "not a symlink" like `EINVAL` / `ENOENT`
+  // https://github.com/unjs/nf3/issues/81
+  "@vercel/nft/out/fs.js": (code) =>
+    replaceOrThrow(
+      code,
+      "e.code !== 'EINVAL' && e.code !== 'ENOENT' && e.code !== 'UNKNOWN'",
+      "e.code !== 'EINVAL' && e.code !== 'ENOENT' && e.code !== 'UNKNOWN' && e.code !== 'EACCES' && e.code !== 'EPERM'",
+      1,
+    ),
   "@vercel/nft/out/utils/sharedlib-emit.js": (code) =>
     replaceOrThrow(
       code,
