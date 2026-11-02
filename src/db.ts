@@ -89,6 +89,7 @@ export const NodeNativePackages: readonly string[] = Object.freeze([
   "node-sass", // [gyp] Native libsass bindings
   "tree-sitter", // [gyp] Native parser generator
   "re2", // [gyp] Native Google RE2 regex engine
+  "mdream", // [prebuilt: napi-rs platform deps] Rust-based HTML to Markdown converter
   "rollup", // [prebuilt: napi-rs platform deps] Bundler with native platform binaries (v4+)
   "sass-embedded", // [prebuilt: napi-rs platform deps] Embedded Dart Sass with platform binaries
   "@tailwindcss/oxide", // [prebuilt: napi-rs platform deps] Tailwind CSS v4 Rust engine
