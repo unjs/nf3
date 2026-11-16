@@ -1,8 +1,8 @@
 // Tests against the built bundle, which includes the patches from `build/patch-libs.ts`
 // (`src` imports unpatched `@vercel/nft` from node_modules). Requires `pnpm build` first.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { fileURLToPath } from "node:url";
-import { existsSync } from "node:fs";
+import fs, { existsSync } from "node:fs";
 import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -23,6 +23,18 @@ async function traceFixture(name: string, files: Record<string, string>) {
   await traceNodeModules([path.join(rootDir, "index.cjs")], { rootDir, outDir: "out" });
   return (file: string) => existsSync(path.join(rootDir, "out/node_modules", file));
 }
+
+// Lets a test make `readlink` fail for selected paths. Spied before the bundle is first used,
+// as the bundled nft keeps its own reference to `fs.promises.readlink`
+let failReadlink: ((path: string) => string | undefined) | undefined;
+const { readlink } = fs.promises;
+vi.spyOn(fs.promises, "readlink").mockImplementation(((p: any, ...args: any[]) => {
+  const code = failReadlink?.(String(p));
+  if (code) {
+    return Promise.reject(Object.assign(new Error(`${code}: readlink '${p}'`), { code }));
+  }
+  return (readlink as any)(p, ...args);
+}) as typeof readlink);
 
 const pkgJSON = (name: string, extra?: object) =>
   JSON.stringify({ name, version: "1.0.0", main: "index.js", ...extra });
@@ -171,4 +183,28 @@ describe.skipIf(!existsSync(distEntry))("dist (patched @vercel/nft)", () => {
       }
     },
   );
+
+  // `fs.js` patch
+  // https://github.com/unjs/nf3/issues/81
+  it("treats ancestor dirs it may not inspect as non-symlinks (EACCES / EPERM)", async () => {
+    // nft calls `readlink` on every ancestor of a traced file up to `base` ("/" by default)
+    const failed: string[] = [];
+    failReadlink = (p) => {
+      const code = p.endsWith(" [x] (y)") ? "EACCES" : p.endsWith("/node_modules") ? "EPERM" : "";
+      if (code) failed.push(code);
+      return code;
+    };
+    try {
+      const traced = await traceFixture("readlink-eacces", {
+        "index.cjs": `require("pkg");\n`,
+        "node_modules/pkg/package.json": pkgJSON("pkg"),
+        "node_modules/pkg/index.js": `module.exports = 1;\n`,
+      });
+      expect(failed).toContain("EACCES");
+      expect(failed).toContain("EPERM");
+      expect(traced("pkg/index.js")).toBe(true);
+    } finally {
+      failReadlink = undefined;
+    }
+  });
 });
